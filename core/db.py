@@ -44,3 +44,24 @@ def find_by_resistance(min_resistance):
     ).order_by(Stent.resistance.desc()).all()
     session.close()
     return rows
+
+
+def find_by_height(mining_height):
+    """按采高选型：支架高度范围能覆盖该采高的所有架型，按阻力降序"""
+    session = Session()
+    rows = session.query(Stent).filter(
+        Stent.height_min <= mining_height,
+        Stent.height_max >= mining_height
+    ).order_by(Stent.resistance.desc()).all()
+    session.close()
+    return rows
+
+
+def find_by_resistance(min_resistance):
+    """按最低工作阻力筛选架型，按阻力降序"""
+    session = Session()
+    rows = session.query(Stent).filter(
+        Stent.resistance >= min_resistance
+    ).order_by(Stent.resistance.desc()).all()
+    session.close()
+    return rows
