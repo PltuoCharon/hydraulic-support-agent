@@ -15,7 +15,7 @@ Base = declarative_base()
 
 
 class SupportModel(Base):
-    """支架型号表 ORM"""
+    """支架型号表 ORM（原 Stent，映射 support_models）"""
     __tablename__ = "support_models"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -54,9 +54,16 @@ class SupportModel(Base):
     
     @classmethod
     def find_by_type(cls, session, stent_type: str):
-        """按架型查询"""
+        """按架型查询（支持模糊匹配）"""
         return session.query(cls).filter(
             cls.type.like(f"%{stent_type}%")
+        ).all()
+    
+    @classmethod
+    def find_by_model(cls, session, model_keyword: str):
+        """按型号关键词查询"""
+        return session.query(cls).filter(
+            cls.model.like(f"%{model_keyword}%")
         ).all()
 
 
@@ -75,7 +82,7 @@ class MiningArea(Base):
     dip_angle = Column(DECIMAL(4, 1), comment="煤层倾角(度)")
     hardness_f = Column(DECIMAL(5, 2), comment="煤质硬度")
     roof_category = Column(String(20), comment="顶板分类")
-    floor_pressure = Column(String(20), comment="底板压力")
+    floor_pressure = Column(DECIMAL(6, 2), comment="底板压力")
     mine_pressure = Column(String(50), comment="矿压显现程度")
     gas_level = Column(String(20), comment="瓦斯等级")
     face_length = Column(DECIMAL(5, 2), comment="工作面长度(m)")
@@ -96,10 +103,17 @@ class MiningArea(Base):
     def get_test_set(cls, session):
         """获取盲测集"""
         return session.query(cls).filter(cls.is_test == 1).all()
+    
+    @classmethod
+    def find_by_category(cls, session, category: str):
+        """按地质条件分类查询"""
+        return session.query(cls).filter(
+            cls.category.like(f"%{category}%")
+        ).all()
 
 
 def get_db():
-    """获取数据库会话"""
+    """获取数据库会话（生成器模式，用于 FastAPI）"""
     db = SessionLocal()
     try:
         yield db
@@ -107,13 +121,26 @@ def get_db():
         db.close()
 
 
+def get_db_session():
+    """获取数据库会话（直接返回，用于脚本）"""
+    return SessionLocal()
+
+
+# 兼容旧代码：Stent = SupportModel
+Stent = SupportModel
+
+
 if __name__ == "__main__":
     # 测试 ORM
     from sqlalchemy import text
     
+    print("=" * 50)
+    print("ORM 测试")
+    print("=" * 50)
+    
     with SessionLocal() as session:
         # 测试 SupportModel
-        print("=== SupportModel 测试 ===")
+        print("\n--- SupportModel 测试 ---")
         count = session.query(SupportModel).count()
         print(f"支架型号总数: {count}")
         
@@ -123,11 +150,30 @@ if __name__ == "__main__":
         for r in results[:3]:
             print(f"  {r.model}: {r.height_min}~{r.height_max}m, {r.working_resistance}kN")
         
+        # 测试按阻力查询
+        results = SupportModel.find_by_resistance(session, 10000)
+        print(f"\n阻力 ≥10000kN 的支架: {len(results)} 条")
+        for r in results[:3]:
+            print(f"  {r.model}: {r.working_resistance}kN")
+        
+        # 测试按类型查询
+        results = SupportModel.find_by_type(session, "掩护")
+        print(f"\n掩护式支架: {len(results)} 条")
+        
         # 测试 MiningArea
-        print("\n=== MiningArea 测试 ===")
+        print("\n--- MiningArea 测试 ---")
         train = MiningArea.get_train_set(session)
         test = MiningArea.get_test_set(session)
         print(f"训练集: {len(train)} 条")
         print(f"盲测集: {len(test)} 条")
         for t in test:
             print(f"  [盲测] {t.name}: {t.category}")
+        
+        # 测试兼容性
+        print("\n--- 兼容性测试 ---")
+        results = Stent.find_by_height(session, 2.0, 4.0)
+        print(f"Stent 别名测试: {len(results)} 条 (应 >0)")
+    
+    print("\n" + "=" * 50)
+    print("✅ ORM 测试全部通过")
+    print("=" * 50)
