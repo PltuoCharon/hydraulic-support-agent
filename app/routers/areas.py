@@ -26,3 +26,25 @@ def db_check(db=Depends(get_db)):
     with db.cursor() as cur:
         cur.execute("SELECT NOW() AS now, DATABASE() AS db_name")
         return cur.fetchone()
+
+@router.get("/{area_id}")
+def get_area(area_id: int, db=Depends(get_db)):
+    """矿区详情：不存在返回404而非空数据"""
+    from fastapi import HTTPException
+    with db.cursor() as cur:
+        cur.execute("SELECT * FROM mining_areas WHERE id=%s AND is_test=0", (area_id,))
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail=f"矿区 id={area_id} 不存在")
+    return row
+
+@router.get("/{area_id}")
+def get_area(area_id: int, db=Depends(get_db)):
+    """矿区详情：不存在返回404而非空数据"""
+    from fastapi import HTTPException
+    with db.cursor() as cur:
+        cur.execute("SELECT * FROM mining_areas WHERE id=%s AND is_test=0", (area_id,))
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail=f"矿区 id={area_id} 不存在")
+    return row
