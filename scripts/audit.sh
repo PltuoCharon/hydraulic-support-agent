@@ -1,7 +1,7 @@
 #!/bin/bash
 # hs_agent 项目体检脚本 v2
 cd ~/hs_agent || exit 1
-DBPW='zyb123'          # ★ 只改这一处：填 hs_user 的真实密码
+DBPW=$(grep '^DB_PASSWORD=' ~/hs_agent/.env | cut -d= -f2)
 PASS=0; FAIL=0
 ck() {
   if eval "$2" > /dev/null 2>&1; then
