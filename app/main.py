@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import areas, supports
+from app.routers import areas, supports, match
 
 app = FastAPI(
     title="液压支架智能选型 API",
@@ -37,3 +37,5 @@ app.add_middleware(
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
+
+app.include_router(match.router, prefix="/api/match", tags=["CBR匹配"])
