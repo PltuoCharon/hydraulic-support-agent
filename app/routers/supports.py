@@ -42,3 +42,29 @@ def get_support(model_id: int, db=Depends(get_db)):
 @router.post("/recommend")
 def recommend(req: RecommendReq):
     return {"input": req, "candidates": [], "note": "D4 接入真实筛选"}
+
+from app.services.filter import filter_supports
+from pydantic import BaseModel, Field
+
+class FilterReq(BaseModel):
+    area_id: int | None = Field(None, description="矿区id，工况从库里取")
+    coal_thickness: float | None = Field(None, gt=0.5, lt=12)
+    dip_angle: float | None = Field(None, ge=0, le=45)
+
+@router.post("/filter")
+def filter_endpoint(req: FilterReq, db=Depends(get_db)):
+    with db.cursor() as cur:
+        if req.area_id:
+            cur.execute("SELECT * FROM mining_areas WHERE id=%s AND is_test=0", (req.area_id,))
+            area = cur.fetchone()
+            if not area:
+                raise HTTPException(404, f"矿区 id={req.area_id} 不存在")
+        else:
+            area = {"coal_thickness": req.coal_thickness, "dip_angle": req.dip_angle or 0}
+        cur.execute("SELECT * FROM support_models WHERE data_status='verified'")
+        supports = cur.fetchall()
+    result = filter_supports(area, supports)
+    return {"total_passed": len(result["passed"]),
+            "required_intensity": result["required_intensity"],
+            "passed": result["passed"],
+            "rejected_count": len(result["rejected"])}
