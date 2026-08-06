@@ -1,4 +1,6 @@
 from core.support import Cylinder, Support
+from app.routers import match
+app.include_router(match.router, prefix="/api/match", tags=["CBR匹配"])
 
 # 组装一台 ZY12000/28/63D：4 根立柱，缸径 320mm
 zy = Support(
