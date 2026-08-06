@@ -16,6 +16,33 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `dict_enum`
+--
+
+DROP TABLE IF EXISTS `dict_enum`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `dict_enum` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `field` varchar(50) NOT NULL,
+  `raw_value` varchar(100) NOT NULL,
+  `std_value` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_field_raw` (`field`,`raw_value`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `dict_enum`
+--
+
+LOCK TABLES `dict_enum` WRITE;
+/*!40000 ALTER TABLE `dict_enum` DISABLE KEYS */;
+INSERT INTO `dict_enum` VALUES (1,'gas_level','低瓦斯','低瓦斯'),(2,'gas_level','高瓦斯','高瓦斯'),(3,'gas_level','突出','突出'),(4,'support_type','ZY','掩护式'),(5,'support_type','ZZ','支撑式'),(6,'support_type','ZF','放顶煤');
+/*!40000 ALTER TABLE `dict_enum` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mining_areas`
 --
 
@@ -203,4 +230,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-06 16:23:55
+-- Dump completed on 2026-08-06 19:19:58
