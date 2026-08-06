@@ -29,7 +29,7 @@ CREATE TABLE `dict_enum` (
   `std_value` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_field_raw` (`field`,`raw_value`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -38,7 +38,7 @@ CREATE TABLE `dict_enum` (
 
 LOCK TABLES `dict_enum` WRITE;
 /*!40000 ALTER TABLE `dict_enum` DISABLE KEYS */;
-INSERT INTO `dict_enum` VALUES (1,'gas_level','低瓦斯','低瓦斯'),(2,'gas_level','高瓦斯','高瓦斯'),(3,'gas_level','突出','突出'),(4,'support_type','ZY','掩护式'),(5,'support_type','ZZ','支撑式'),(6,'support_type','ZF','放顶煤');
+INSERT INTO `dict_enum` VALUES (1,'gas_level','低瓦斯','低瓦斯'),(2,'gas_level','高瓦斯','高瓦斯'),(3,'gas_level','突出','突出'),(4,'support_type','ZY','掩护式'),(5,'support_type','ZZ','支撑式'),(6,'support_type','ZF','放顶煤'),(7,'roof','破碎','不稳定'),(8,'roof','复杂','不稳定'),(9,'roof','浅埋薄基岩','中等稳定'),(10,'roof','浅埋','中等稳定'),(11,'roof','坚硬','坚硬'),(12,'roof','冲击','坚硬'),(13,'roof','深部','坚硬'),(14,'pressure','来压平缓','来压不明显'),(15,'pressure','平均来压步距16m','来压明显'),(16,'pressure','强矿压初次来压150m','强矿压'),(17,'pressure','强冲击倾向','强矿压'),(18,'pressure','重大冲击事故','强矿压'),(19,'pressure','冲击停产','强矿压'),(20,'gas','低瓦斯煤层涌出量大','低瓦斯'),(21,'gas','高瓦斯(400m3/min)','高瓦斯'),(22,'gas','涌出量大','高瓦斯'),(23,'gas','高瓦斯突出矿区','突出');
 /*!40000 ALTER TABLE `dict_enum` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -230,4 +230,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-06 19:19:58
+-- Dump completed on 2026-08-06 20:21:03
