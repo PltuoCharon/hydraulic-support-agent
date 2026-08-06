@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import Optional
 from app.db import get_db
 from app.models.schemas import RecommendReq
+from app.core.response import ok
 
 router = APIRouter()
 
@@ -28,7 +29,7 @@ def list_supports(
     with db.cursor() as cur:
         cur.execute(sql, params)
         rows = cur.fetchall()
-    return {"total": len(rows), "items": rows}
+    return ok({"total": len(rows), "items": rows})
 
 @router.get("/{model_id}")
 def get_support(model_id: int, db=Depends(get_db)):
@@ -37,7 +38,7 @@ def get_support(model_id: int, db=Depends(get_db)):
         row = cur.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail=f"支架 id={model_id} 不存在")
-    return row
+    return ok(row)
 
 @router.post("/recommend")
 def recommend(req: RecommendReq):
@@ -64,7 +65,7 @@ def filter_endpoint(req: FilterReq, db=Depends(get_db)):
         cur.execute("SELECT * FROM support_models WHERE data_status='verified'")
         supports = cur.fetchall()
     result = filter_supports(area, supports)
-    return {"total_passed": len(result["passed"]),
-            "required_intensity": result["required_intensity"],
-            "passed": result["passed"],
-            "rejected_count": len(result["rejected"])}
+    return ok({"total_passed": len(result["passed"]),
+            	"required_intensity": result["required_intensity"],
+           	"passed": result["passed"],
+            	"rejected_count": len(result["rejected"])})

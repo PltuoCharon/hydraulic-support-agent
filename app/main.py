@@ -17,3 +17,15 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from app.core.response import fail
+
+@app.exception_handler(404)
+async def not_found(request: Request, exc):
+    return JSONResponse(status_code=404, content=fail("资源不存在", code=404))
+
+@app.exception_handler(Exception)
+async def server_error(request: Request, exc):
+    return JSONResponse(status_code=500, content=fail(f"服务器内部错误: {type(exc).__name__}", code=500))
