@@ -37,3 +37,18 @@ def test_match_404():
 def test_ahp_consistency():
     from app.services.ahp import ahp_weights, JUDGE_MATRIX
     assert ahp_weights(JUDGE_MATRIX)["CR"] < 0.1
+
+def test_match_topn():
+    r = client.post("/api/match", json={"area_id": 1, "top_n": 5})
+    assert r.status_code == 200
+    items = r.json()["data"]["items"]
+    assert len(items) <= 5
+    sims = [i["similarity"] for i in items]
+    assert sims == sorted(sims, reverse=True)
+
+def test_match_404():
+    assert client.post("/api/match", json={"area_id": 99999}).status_code == 404
+
+def test_ahp_consistency():
+    from app.services.ahp import ahp_weights, JUDGE_MATRIX
+    assert ahp_weights(JUDGE_MATRIX)["CR"] < 0.1
