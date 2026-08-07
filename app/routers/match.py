@@ -12,7 +12,10 @@ from app.core.response import ok
 
 router = APIRouter()
 W = np.array(ahp_weights(JUDGE_MATRIX)["weights"])
-NUM_FEATS = ["_eff_h", "dip_angle", "hardness_f", "depth"]
+NUM_FEATS = ["_eff_h", "coal_thickness", "dip_angle", "hardness_f", "depth"]
+# 数值特征权重（源自AHP向量重排：采高0.4203, 阻力0.2644->煤层厚度代理, 顶板0.1489->硬度, 矿压0.099->埋深, 倾角0.0674）
+NUM_W = {"_eff_h": 0.4203, "coal_thickness": 0.2644, "hardness_f": 0.1489,
+         "depth": 0.0990, "dip_angle": 0.0674}
 
 CASE_SQL = """
 SELECT wc.id AS case_id, wc.working_face_name, wc.support_model_id,
@@ -82,7 +85,9 @@ def match(req: MatchReq, db=Depends(get_db)):
     for c in cases:
         c_vec = np.array([v if v is not None else 0.5
                           for v in (scalers[f].transform(c.get(f)) for f in NUM_FEATS)])
-        num_dist = float(np.sqrt((W[:len(NUM_FEATS)] * (c_vec - t_vec) ** 2).sum()))
+        w = np.array([NUM_W[f] for f in NUM_FEATS])
+        w = w / w.sum()
+        num_dist = float(np.sqrt((w * (c_vec - t_vec) ** 2).sum()))
         cat_scores = [
             categorical_score(normalize_categorical(c.get("roof_condition"), ROOF_MAP),
                               normalize_categorical(target.get("roof_category"), ROOF_MAP), ROOF_LEVELS),
