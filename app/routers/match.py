@@ -20,7 +20,7 @@ NUM_W = {"_eff_h": 0.4203, "coal_thickness": 0.2644, "hardness_f": 0.1489,
 def get_num_weights(cases):
     """按 MATCH_WEIGHTS 环境变量返回数值特征权重向量: ahp(默认)/entropy/combo"""
     import os
-    mode = os.getenv("MATCH_WEIGHTS", "ahp")
+    mode = os.getenv("MATCH_WEIGHTS", "entropy")
     w_ahp = np.array([NUM_W[f] for f in NUM_FEATS])
     if mode == "ahp":
         w = w_ahp
