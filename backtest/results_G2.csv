@@ -1,0 +1,6 @@
+﻿group,area_id,area,truth,top1_model,top1_sim,top1_wr,hit_top1,hit_top3,series_top3,wr_dev_pct
+G2,6,鲍店1316,ZF15000/25/45,ZF15000/25/45,0.8407,15000,True,True,True,0.0
+G2,8,晋城寺河,ZY21000/38/82D,ZF15000/25/45,0.7172,15000,False,True,True,-28.6
+G2,10,平朔安家岭,ZY12000/28/58,ZF15000/25/45,0.6861,15000,False,False,True,25.0
+G2,13,神东黄玉川,ZF15000/25/45,ZY21000/38/82D,0.8219,21000,False,True,True,40.0
+G2,16,义马千秋21121,ZYA29000/45/100D,ZYA29000/45/100D,0.9793,29000,True,True,True,0.0

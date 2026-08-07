@@ -17,6 +17,20 @@ NUM_FEATS = ["_eff_h", "coal_thickness", "dip_angle", "hardness_f", "depth"]
 NUM_W = {"_eff_h": 0.4203, "coal_thickness": 0.2644, "hardness_f": 0.1489,
          "depth": 0.0990, "dip_angle": 0.0674}
 
+def get_num_weights(cases):
+    """按 MATCH_WEIGHTS 环境变量返回数值特征权重向量: ahp(默认)/entropy/combo"""
+    import os
+    mode = os.getenv("MATCH_WEIGHTS", "ahp")
+    w_ahp = np.array([NUM_W[f] for f in NUM_FEATS])
+    if mode == "ahp":
+        w = w_ahp
+    else:
+        from app.services.entropy_weight import entropy_weights
+        ew = entropy_weights(cases, NUM_FEATS)
+        w_ent = np.array([ew[f] for f in NUM_FEATS])
+        w = w_ent if mode == "entropy" else 0.5 * w_ahp + 0.5 * w_ent
+    return w / w.sum()
+
 CASE_SQL = """
 SELECT wc.id AS case_id, wc.working_face_name, wc.support_model_id,
        wc.coal_thickness, wc.dip_angle, wc.roof_condition, wc.gas_level, wc.mining_height,
@@ -85,8 +99,7 @@ def match(req: MatchReq, db=Depends(get_db)):
     for c in cases:
         c_vec = np.array([v if v is not None else 0.5
                           for v in (scalers[f].transform(c.get(f)) for f in NUM_FEATS)])
-        w = np.array([NUM_W[f] for f in NUM_FEATS])
-        w = w / w.sum()
+        w = get_num_weights(cases)
         num_dist = float(np.sqrt((w * (c_vec - t_vec) ** 2).sum()))
         cat_scores = [
             categorical_score(normalize_categorical(c.get("roof_condition"), ROOF_MAP),
