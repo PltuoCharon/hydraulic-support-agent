@@ -19,8 +19,11 @@ def required_intensity(h_max: float) -> float:
 def effective_height(area: dict) -> float:
     """有效采高：煤层厚>6.5m(综放/分层)用机采高度，否则用煤层厚度。
     机采高度优先级: mining_height -> (min+max)/2 -> max -> min -> 4.0(综放默认值,与案例库一致)"""
+    import os
     from app.core.numparse import parse_number
     coal = parse_number(area.get("coal_thickness")) or 0
+    if os.getenv("EFFECT_HEIGHT_RULE", "on") == "off":
+        return coal  # G0 基线：不做有效采高修正
     if coal <= 6.5:
         return coal
     h = parse_number(area.get("mining_height"))
