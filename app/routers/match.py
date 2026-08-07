@@ -33,8 +33,8 @@ class MatchReq(BaseModel):
 
 def build_diffs(target, c, cat_scores):
     diffs = []
-    th = parse_number(target.get("coal_thickness"))
-    ch = parse_number(c.get("coal_thickness"))
+    th = parse_number(target.get("_eff_h"))
+    ch = parse_number(c.get("_eff_h"))
     if th and ch:
         d = round(ch - th, 2)
         diffs.append(f"案例采高{ch}m({'+' if d >= 0 else ''}{d}m)")

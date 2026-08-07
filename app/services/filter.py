@@ -40,21 +40,37 @@ def filter_supports(area: dict, supports: list) -> dict:
             "passed": passed, "rejected": rejected}
 
 def effective_height(area: dict) -> float:
-    """有效采高：煤层厚>6.5m(综放/分层)用机采高度，否则用煤层厚度"""
+    """有效采高：煤层厚>6.5m(综放/分层)用机采高度，否则用煤层厚度。
+    机采高度优先级: mining_height -> (min+max)/2 -> max -> min -> 煤层厚度"""
     from app.core.numparse import parse_number
     coal = parse_number(area.get("coal_thickness")) or 0
-    if coal > 6.5:
-        h = parse_number(area.get("mining_height"))
-        if h:
-            return h
-    return coal
+    if coal <= 6.5:
+        return coal
+    h = parse_number(area.get("mining_height"))
+    if h:
+        return h
+    lo = parse_number(area.get("mining_height_min"))
+    hi = parse_number(area.get("mining_height_max"))
+    if lo and hi:
+        return (lo + hi) / 2
+    return hi or lo or coal
+
+
 
 def effective_height(area: dict) -> float:
-    """有效采高：煤层厚>6.5m(综放/分层)用机采高度，否则用煤层厚度"""
+    """有效采高：煤层厚>6.5m(综放/分层)用机采高度，否则用煤层厚度。
+    机采高度优先级: mining_height -> (min+max)/2 -> max -> min -> 煤层厚度"""
     from app.core.numparse import parse_number
     coal = parse_number(area.get("coal_thickness")) or 0
-    if coal > 6.5:
-        h = parse_number(area.get("mining_height"))
-        if h:
-            return h
-    return coal
+    if coal <= 6.5:
+        return coal
+    h = parse_number(area.get("mining_height"))
+    if h:
+        return h
+    lo = parse_number(area.get("mining_height_min"))
+    hi = parse_number(area.get("mining_height_max"))
+    if lo and hi:
+        return (lo + hi) / 2
+    return hi or lo or coal
+
+

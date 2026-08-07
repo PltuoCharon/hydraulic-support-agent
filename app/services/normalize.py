@@ -13,7 +13,7 @@ class MinMaxScaler:
             return None
         if self.max == self.min:
             return 0.5
-        return (x - self.min) / (self.max - self.min)
+        return min(1.0, max(0.0, (x - self.min) / (self.max - self.min)))
 
 def categorical_score(case_val, target_val, levels, adjacent=0.5, mismatch=0.0):
     """完全一致1 / 相邻等级0.5 / 不符0 / 缺失中性0.5"""
