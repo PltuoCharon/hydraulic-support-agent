@@ -12,7 +12,7 @@ from app.core.response import ok
 
 router = APIRouter()
 W = np.array(ahp_weights(JUDGE_MATRIX)["weights"])
-NUM_FEATS = ["coal_thickness", "dip_angle", "hardness_f", "depth"]
+NUM_FEATS = ["_eff_h", "dip_angle", "hardness_f", "depth"]
 
 CASE_SQL = """
 SELECT wc.id AS case_id, wc.working_face_name, wc.support_model_id,
@@ -52,7 +52,7 @@ def match(req: MatchReq, db=Depends(get_db)):
         raise HTTPException(422, "area_id 与手动工况只能二选一")
     with db.cursor() as cur:
         if req.area_id:
-            cur.execute("SELECT * FROM mining_areas WHERE id=%s AND is_test=0", (req.area_id,))
+            cur.execute("SELECT * FROM mining_areas WHERE id=%s", (req.area_id,))
             target = cur.fetchone()
             if not target:
                 raise HTTPException(404, f"矿区 id={req.area_id} 不存在")
@@ -66,6 +66,11 @@ def match(req: MatchReq, db=Depends(get_db)):
         else:
             cur.execute(CASE_SQL)
         cases = cur.fetchall()
+    from app.services.filter import effective_height
+    target["_eff_h"] = effective_height(target)
+    for c in cases:
+        c["_eff_h"] = effective_height(c)
+
     if not cases:
         return ok({"total": 0, "items": []}, msg="案例库为空")
 

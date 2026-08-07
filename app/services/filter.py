@@ -17,7 +17,7 @@ def required_intensity(h_max: float) -> float:
     return round(8 * h_max * 25 / 1000, 3)
 
 def filter_supports(area: dict, supports: list) -> dict:
-    h_max = parse_number(area.get("coal_thickness")) or parse_number(area.get("mining_height_max")) or 0
+    h_max = effective_height(area)
     h_min = parse_number(area.get("mining_height_min")) or h_max * 0.7
     dip = parse_number(area.get("dip_angle")) or 0
     req_p = required_intensity(h_max)
@@ -38,3 +38,23 @@ def filter_supports(area: dict, supports: list) -> dict:
             passed.append(s)
     return {"required_intensity": req_p, "h_used": [h_min, h_max],
             "passed": passed, "rejected": rejected}
+
+def effective_height(area: dict) -> float:
+    """有效采高：煤层厚>6.5m(综放/分层)用机采高度，否则用煤层厚度"""
+    from app.core.numparse import parse_number
+    coal = parse_number(area.get("coal_thickness")) or 0
+    if coal > 6.5:
+        h = parse_number(area.get("mining_height"))
+        if h:
+            return h
+    return coal
+
+def effective_height(area: dict) -> float:
+    """有效采高：煤层厚>6.5m(综放/分层)用机采高度，否则用煤层厚度"""
+    from app.core.numparse import parse_number
+    coal = parse_number(area.get("coal_thickness")) or 0
+    if coal > 6.5:
+        h = parse_number(area.get("mining_height"))
+        if h:
+            return h
+    return coal
