@@ -1,75 +1,62 @@
-"""盲测回测：遍历测试矿区 → /api/match → 命中判定 → CSV
-用法: python backtest/run_backtest.py --weight ahp|entropy|combo --tag G1"""
-import argparse, csv, json, re, sys
-import urllib.request
-sys.path.insert(0, ".")
-from app.db import get_conn
+"""W16-D2 回测脚本：对 5 个盲测矿区调 match 接口，统计命中率与阻力偏差。
+用法:
+  1. 以目标组配置启动 uvicorn（G0: EFFECT_HEIGHT_RULE=off；G1: 默认）
+  2. python backtest/run_backtest.py G0   # 组标签作为参数
+输出: backtest/results_<组>.csv + 终端汇总
+"""
+import csv, json, re, sys, urllib.request
 
-BASE = "http://127.0.0.1:8000"
+GROUND_TRUTH = {
+    6:  ("鲍店1316",     "ZF15000/25/45",   15000),
+    8:  ("晋城寺河",     "ZY21000/38/82D",  21000),
+    10: ("平朔安家岭",   "ZY12000/28/58",   12000),
+    13: ("神东黄玉川",   "ZF15000/25/45",   15000),
+    16: ("义马千秋21121", "ZYA29000/45/100D", 29000),
+}
 
-def post(path, payload):
-    req = urllib.request.Request(BASE + path, method="POST",
-        data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
-    return json.loads(urllib.request.urlopen(req).read())["data"]
+def match(area_id, top_n=5):
+    req = urllib.request.Request(
+        "http://127.0.0.1:8000/api/match/",
+        data=json.dumps({"area_id": area_id, "top_n": top_n}).encode(),
+        headers={"Content-Type": "application/json"}, method="POST")
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())["data"]["items"]
 
-def same_series(rec_model, actual_model):
-    """同型号或同系列判定"""
-    if not rec_model or not actual_model:
-        return False
-    if rec_model == actual_model:
-        return True
-    base = lambda m: re.match(r"^[A-Z]+\d+", m.replace(" ", "")).group(0) if re.match(r"^[A-Z]+\d+", m.replace(" ", "")) else m
-    return base(rec_model) == base(actual_model)   # 如 ZY21000 段相同即同系列
-
-def resistance_close(rec_r, actual_r, tol=0.15):
-    try:
-        return abs(float(rec_r) - float(actual_r)) / float(actual_r) <= tol
-    except (TypeError, ZeroDivisionError):
-        return False
+def series_of(model: str) -> str:
+    """架型系列 = 型号前导字母，如 ZF15000 -> ZF, ZYA29000 -> ZYA"""
+    m = re.match(r"[A-Z]+", model or "")
+    return m.group(0) if m else ""
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--tag", required=True)
-    args = ap.parse_args()
-
-    conn = get_conn(); cur = conn.cursor()
-    cur.execute("""
-        SELECT a.id, a.area_name, s.model AS actual, s.working_resistance AS actual_r
-        FROM mining_areas a
-        JOIN working_conditions wc ON wc.area_id = a.id
-        LEFT JOIN support_models s ON wc.support_model_id = s.id
-        WHERE a.is_test=1 GROUP BY a.id""")
-    tests = cur.fetchall(); conn.close()
-    if not tests:
-        sys.exit("没有 is_test=1 的盲测矿区！先按W16计划标记")
-
-    rows = []
-    for t in tests:
-        data = post("/api/match/", {"area_id": t["id"], "top_n": 5})
-        items = data["items"]
-        hit1 = items and (same_series(items[0]["support_model"], t["actual"])
-                          or resistance_close(items[0]["working_resistance"], t["actual_r"]))
-        hit3 = any(same_series(i["support_model"], t["actual"])
-                   or resistance_close(i["working_resistance"], t["actual_r"]) for i in items[:3])
-        dev = (abs(items[0]["working_resistance"] - t["actual_r"]) / t["actual_r"]
-               if items and t["actual_r"] else None)
-        rows.append({"area": t["area_name"], "actual": t["actual"],
-                     "top1": items[0]["support_model"] if items else None,
-                     "sim1": items[0]["similarity"] if items else None,
-                     "hit1": bool(hit1), "hit3": bool(hit3),
-                     "dev": round(dev, 4) if dev is not None else None})
-        print(f"{t['area_name']}: 实际={t['actual']} Top1={rows[-1]['top1']} "
-              f"hit1={rows[-1]['hit1']} hit3={rows[-1]['hit3']}")
-
-    n = len(rows)
-    summary = {"tag": args.tag, "n": n,
-               "top1_rate": round(sum(r["hit1"] for r in rows)/n, 3),
-               "top3_rate": round(sum(r["hit3"] for r in rows)/n, 3)}
-    print("\n汇总:", summary)
-    with open(f"backtest/result_{args.tag}.csv", "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=rows[0].keys()); w.writeheader(); w.writerows(rows)
-    with open(f"backtest/summary_{args.tag}.json", "w", encoding="utf-8") as f:
-        json.dump(summary, f, ensure_ascii=False, indent=2)
+    group = sys.argv[1] if len(sys.argv) > 1 else "GX"
+    rows, hit1, hit3, devs = [], 0, 0, []
+    for aid, (name, truth, truth_wr) in GROUND_TRUTH.items():
+        items = match(aid)
+        models = [it["support_model"] for it in items]
+        top1 = items[0]
+        h1 = truth in models[:1]
+        h3 = truth in models[:3]
+        s3 = any(series_of(m) == series_of(truth) for m in models[:3])
+        wr = top1.get("working_resistance") or 0
+        dev = round((wr - truth_wr) / truth_wr * 100, 1) if wr else None
+        hit1 += h1; hit3 += h3
+        if dev is not None: devs.append(abs(dev))
+        rows.append([group, aid, name, truth, top1["support_model"],
+                     top1["similarity"], wr, h1, h3, s3, dev])
+        print(f"{name:12s} Top1={top1['support_model']:18s} sim={top1['similarity']:.4f} "
+              f"Top1中={h1} Top3中={h3} 同系列Top3={s3} 阻力偏差={dev}%")
+    n = len(GROUND_TRUTH)
+    print(f"\n===== {group} 汇总 =====")
+    print(f"Top-1 命中率: {hit1}/{n} = {hit1/n:.0%}")
+    print(f"Top-3 命中率: {hit3}/{n} = {hit3/n:.0%}")
+    print(f"Top-1 平均阻力偏差: {sum(devs)/len(devs):.1f}%")
+    out = f"backtest/results_{group}.csv"
+    with open(out, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(["group","area_id","area","truth","top1_model","top1_sim",
+                    "top1_wr","hit_top1","hit_top3","series_top3","wr_dev_pct"])
+        w.writerows(rows)
+    print(f"已保存 {out}")
 
 if __name__ == "__main__":
     main()
