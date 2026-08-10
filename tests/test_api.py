@@ -124,3 +124,13 @@ def test_chat_agent_matched():
     assert d["matched"] is True
     assert d["matches"][0]["model"] == "ZY21000/38/82D"
     assert d["reply"] == "基于匹配结果的建议"
+
+def test_support_calc_physics():
+    """重算公式物理正确性：缸径320→360，阻力比应=(360/320)^2。"""
+    from app.services.support_calc import recalc
+    r320 = recalc(320)
+    r360 = recalc(360)
+    ratio = r360["resistance_kn"] / r320["resistance_kn"]
+    assert abs(ratio - (360 / 320) ** 2) < 0.001
+    assert r320["resistance_kn"] > r320["single_thrust_kn"]  # η<1? 多柱
+    assert r320["note"].startswith("公式法")

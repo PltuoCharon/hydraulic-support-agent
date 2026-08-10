@@ -6,6 +6,7 @@ import json
 from langchain_core.tools import tool
 from app.db import get_conn
 from app.services.matcher import run_match
+from app.services.support_calc import recalc
 
 # 允许查询的表与可模糊匹配的字段（白名单）
 ALLOWED = {
@@ -81,7 +82,24 @@ def run_matching(coal_thickness: float, dip_angle: float = 0.0, top_n: int = 3) 
             f"差异：{'；'.join(it.get('diffs', []))}")
     return "\n".join(lines)
 
-TOOLS = [query_database, run_matching]   # D3~D4 逐步追加
+@tool
+def recalc_params(bore_mm: float, pressure_mpa: float = 31.5, n_cylinders: int = 2,
+                  center_dist: float = 1.75, canopy_len: float = 4.0) -> str:
+    """支架部件参数修改重算：给定立柱缸径(mm)、泵站压力(MPa)、立柱数、中心距(m)、
+    控顶距(m)，按力学公式重算单柱推力、工作阻力、支护强度。
+    用于"缸径320换成360会怎样""泵站压力提高后阻力多大"类问题。
+    结果为公式法估算值，非厂家实测。
+    """
+    try:
+        r = recalc(bore_mm, pressure_mpa, n_cylinders, center_dist, canopy_len)
+    except ValueError as e:
+        return f"参数错误：{e}"
+    return (f"重算结果（{r['note']}，η={r['eta']}）：\n"
+            f"单柱推力 {r['single_thrust_kn']}kN；"
+            f"整架工作阻力 {r['resistance_kn']}kN；"
+            f"支护强度 {r['intensity_mpa']}MPa")
+
+TOOLS = [query_database, run_matching, recalc_params]   # D4 追加
 
 if __name__ == "__main__":
     import os, sys
@@ -92,3 +110,7 @@ if __name__ == "__main__":
     print("--- 工具2测试 ---")
     print(run_matching.invoke({"coal_thickness": 8.8, "dip_angle": 2}))
     print(run_matching.invoke({"coal_thickness": 99}))   # 越界测试
+    print("--- 工具3测试 ---")
+    print(recalc_params.invoke({"bore_mm": 320}))
+    print(recalc_params.invoke({"bore_mm": 360}))
+    print(recalc_params.invoke({"bore_mm": 999}))   # 越界测试

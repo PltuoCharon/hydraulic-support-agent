@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 # 数据库配置
-DB_PASSWORD = os.getenv("DB_PASSWORD", "zyb123")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 ENGINE_URL = f"mysql+pymysql://hs_user:{DB_PASSWORD}@127.0.0.1:3306/hydraulic_support?charset=utf8mb4"
 
 engine = create_engine(ENGINE_URL, echo=False)
