@@ -56,5 +56,8 @@ ck "chat一次性返回code0"  "post /api/chat/ '{\"message\":\"测试\"}' | jqr
 ck "chat返回session_id"   "post /api/chat/ '{\"message\":\"测试\"}' | jqr 'assert d[\"data\"][\"session_id\"]'"
 ck "chat流式DONE结尾"     "curl -sN -X POST $BASE/api/chat/ -H 'Content-Type: application/json' -d '{\"message\":\"测试\",\"stream\":true}' --max-time 60 | grep -q DONE"
 
+ck "chatAgent自主调工具"  "post /api/chat/ '{\"message\":\"煤层8.8米推荐支架\"}' | jqr 'assert \"run_matching\" in d[\"data\"][\"tools\"]'"
+ck "chat概念题不用工具"   "post /api/chat/ '{\"message\":\"什么是支护强度\"}' | jqr 'assert d[\"data\"][\"tools\"]==[]'"
+
 echo "===== 验收结果: PASS=$PASS FAIL=$FAIL ====="
 

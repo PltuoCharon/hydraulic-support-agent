@@ -63,8 +63,8 @@ def run_matching(coal_thickness: float, dip_angle: float = 0.0, top_n: int = 3) 
     Returns:
         文字摘要：Top-N 相似案例的矿区、用架型号、工作阻力、相似度、差异说明。
     """
-    if not (0.5 < coal_thickness < 12):
-        return f"参数错误：煤层厚度 {coal_thickness} 超出有效范围 (0.5, 12)"
+    if not (0.5 < coal_thickness < 25):
+        return f"参数错误：煤层厚度 {coal_thickness} 超出有效范围 (0.5, 25)"
     top_n = max(1, min(int(top_n), 5))
     try:
         data = run_match(coal_thickness=coal_thickness,
