@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 import json
 from langchain_core.tools import tool
 from app.db import get_conn
+from app.services.matcher import run_match
 
 # 允许查询的表与可模糊匹配的字段（白名单）
 ALLOWED = {
@@ -48,7 +49,39 @@ def query_database(table: str, keyword: str = "", limit: int = 5) -> str:
     finally:
         conn.close()
 
-TOOLS = [query_database]   # D2~D4 逐步追加
+@tool
+def run_matching(coal_thickness: float, dip_angle: float = 0.0, top_n: int = 3) -> str:
+    """CBR 案例匹配引擎：输入工作面工况参数，返回最相似的历史案例及其实际用架。
+    当用户给出煤层厚度等地质条件、要求推荐支架型号时，必须调用本工具获取
+    真实匹配结果，禁止凭记忆推荐型号。
+    Args:
+        coal_thickness: 煤层厚度（米），必须 >0.5 且 <12
+        dip_angle: 煤层倾角（度），0~45，未知填 0
+        top_n: 返回案例数，1~5
+    Returns:
+        文字摘要：Top-N 相似案例的矿区、用架型号、工作阻力、相似度、差异说明。
+    """
+    if not (0.5 < coal_thickness < 12):
+        return f"参数错误：煤层厚度 {coal_thickness} 超出有效范围 (0.5, 12)"
+    top_n = max(1, min(int(top_n), 5))
+    try:
+        data = run_match(coal_thickness=coal_thickness,
+                         dip_angle=dip_angle or 0, top_n=top_n)
+    except Exception as e:
+        return f"匹配引擎错误：{type(e).__name__}: {e}"
+    if not data["items"]:
+        return "案例库为空，无匹配结果"
+    lines = [f"案例库共 {data['total']} 个可比案例，Top-{len(data['items'])} 相似案例："]
+    for i, it in enumerate(data["items"], 1):
+        lines.append(
+            f"{i}. {it.get('area_name')}（采高{it.get('_eff_h')}m）"
+            f"→ 实际用架 {it.get('support_model')}，"
+            f"工作阻力 {it.get('working_resistance')}kN，"
+            f"相似度 {it.get('similarity')}；"
+            f"差异：{'；'.join(it.get('diffs', []))}")
+    return "\n".join(lines)
+
+TOOLS = [query_database, run_matching]   # D3~D4 逐步追加
 
 if __name__ == "__main__":
     import os, sys
@@ -56,3 +89,6 @@ if __name__ == "__main__":
     print(query_database.invoke({"table": "support_models", "keyword": "ZY21000"}))
     print(query_database.invoke({"table": "mining_areas", "keyword": "补连塔", "limit": 2}))
     print(query_database.invoke({"table": "users"}))   # 白名单拒绝测试
+    print("--- 工具2测试 ---")
+    print(run_matching.invoke({"coal_thickness": 8.8, "dip_angle": 2}))
+    print(run_matching.invoke({"coal_thickness": 99}))   # 越界测试
