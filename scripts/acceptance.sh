@@ -58,10 +58,3 @@ ck "chat流式DONE结尾"     "curl -sN -X POST $BASE/api/chat/ -H 'Content-Type
 
 echo "===== 验收结果: PASS=$PASS FAIL=$FAIL ====="
 
-echo "===== 5. W17 LLM 对话 ====="
-check "chat一次性返回" \
-  "$(curl -sL -X POST $BASE/api/chat/ -H 'Content-Type: application/json' \
-     -d '{"message":"测试"}' | grep -c '\"code\":0' || true)" "1"
-check "chat流式DONE结尾" \
-  "$(curl -sN -X POST $BASE/api/chat/ -H 'Content-Type: application/json' \
-     -d '{"message":"测试","stream":true}' --max-time 60 | grep -c 'DONE' || true)" "1"
