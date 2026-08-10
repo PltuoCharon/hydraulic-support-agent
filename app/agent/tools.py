@@ -7,6 +7,7 @@ from langchain_core.tools import tool
 from app.db import get_conn
 from app.services.matcher import run_match
 from app.services.support_calc import recalc
+from app.services.knowledge import search
 
 # 允许查询的表与可模糊匹配的字段（白名单）
 ALLOWED = {
@@ -99,7 +100,23 @@ def recalc_params(bore_mm: float, pressure_mpa: float = 31.5, n_cylinders: int =
             f"整架工作阻力 {r['resistance_kn']}kN；"
             f"支护强度 {r['intensity_mpa']}MPa")
 
-TOOLS = [query_database, run_matching, recalc_params]   # D4 追加
+@tool
+def search_knowledge(query: str, top_k: int = 3) -> str:
+    """检索液压支架设计手册/标准知识库（当前含 MT/T 556-1996 设计规范）。
+    当用户问设计规则、参数确定方法、规范要求等"书上怎么说"类问题时调用。
+    返回相关内容块及其来源(文件+页码)，回答时必须注明来源。
+    """
+    top_k = max(1, min(int(top_k), 5))
+    hits = search(query, top_k)
+    if not hits:
+        return "知识库中未找到相关内容（当前语料：MT/T 556-1996 液压支架设计规范）"
+    lines = []
+    for i, h in enumerate(hits, 1):
+        lines.append(f"【{i}】来源:{h['source']} {h['loc']} (相关度{h['score']})\n"
+                     f"{h['content'].strip()}")
+    return "\n\n".join(lines)
+
+TOOLS = [query_database, run_matching, recalc_params, search_knowledge]
 
 if __name__ == "__main__":
     import os, sys
@@ -114,3 +131,6 @@ if __name__ == "__main__":
     print(recalc_params.invoke({"bore_mm": 320}))
     print(recalc_params.invoke({"bore_mm": 360}))
     print(recalc_params.invoke({"bore_mm": 999}))   # 越界测试
+    print("--- 工具4测试 ---")
+    print(search_knowledge.invoke({"query": "支护强度确定"})[:300])
+    print(search_knowledge.invoke({"query": "火星殖民政策"}))   # 无关查询

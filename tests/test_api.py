@@ -134,3 +134,11 @@ def test_support_calc_physics():
     assert abs(ratio - (360 / 320) ** 2) < 0.001
     assert r320["resistance_kn"] > r320["single_thrust_kn"]  # η<1? 多柱
     assert r320["note"].startswith("公式法")
+
+def test_knowledge_search():
+    """RAG检索：支护强度相关查询应命中MT/T556条款，无关查询应空。"""
+    from app.services.knowledge import search
+    hits = search("支护强度如何确定")
+    assert hits and "556" in hits[0]["source"]
+    assert hits[0]["score"] > 0
+    assert search("火星殖民政策") == []
