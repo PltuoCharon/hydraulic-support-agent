@@ -1,8 +1,10 @@
-"""对话接口。W17-D2：一次性返回；D4 改流式；D5 加会话历史。"""
+"""对话接口。W17-D4：stream=true 时 SSE 打字机流式返回；否则一次性返回。"""
+import time
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from app.core.response import ok
-from app.services.llm import chat
+from app.services.llm import chat, get_llm
 
 router = APIRouter()
 
@@ -15,20 +17,36 @@ SYSTEM_PROMPT = """你是"液压支架智能选型助手"，服务于煤矿综�
 class ChatReq(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
     session_id: str | None = None   # D5 启用
+    stream: bool = False            # D4：true 走 SSE 流式
+
+def sse_gen(msgs):
+    """把 LLM 的流式 chunk 包装成 SSE 格式：data: ...\n\n，结尾 [DONE]。"""
+    try:
+        for chunk in get_llm().stream(msgs):
+            if chunk.content:
+                yield f"data: {chunk.content}\n\n"
+    except Exception as e:
+        # LLM 挂了也给前端一个可识别的结尾，不裸 500
+        yield f"data: [ERROR] {type(e).__name__}\n\n"
+    finally:
+        yield "data: [DONE]\n\n"
 
 @router.post("/")
-def chat_once(req: ChatReq):
+def chat_endpoint(req: ChatReq):
+    if req.stream:
+        msgs = [("system", SYSTEM_PROMPT), ("human", req.message)]
+        return StreamingResponse(
+            sse_gen(msgs),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
     reply = chat(req.message, system=SYSTEM_PROMPT)
     return ok({"reply": reply, "session_id": req.session_id})
 
 
-# ---- W17-D3 SSE 实验端点（D4 后删除）----
-from fastapi.responses import StreamingResponse
-import time
-
+# ---- W17-D3 SSE 实验端点（验收后可删）----
 @router.get("/stream_demo")
 def stream_demo():
-    """假流式：逐字推送固定文本，体验 SSE 格式。"""
     def gen():
         for ch in "液压支架选型需考虑煤层厚度、倾角、瓦斯等级。":
             yield f"data: {ch}\n\n"

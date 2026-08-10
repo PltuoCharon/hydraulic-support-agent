@@ -61,3 +61,19 @@ def test_chat_reply():
     assert r.status_code == 200
     body = r.json()
     assert body["code"] == 0 and body["data"]["reply"] == "测试回复"
+
+def test_chat_stream():
+    """流式模式：验证 SSE 格式与 [DONE] 结尾，不真调 LLM。"""
+    from unittest.mock import patch
+    class FakeChunk:
+        def __init__(self, c): self.content = c
+    class FakeLLM:
+        def stream(self, msgs):
+            return iter([FakeChunk("掩"), FakeChunk("护式"), FakeChunk("")])
+    with patch("app.routers.chat.get_llm", return_value=FakeLLM()):
+        r = client.post("/api/chat/", json={"message": "hi", "stream": True})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/event-stream")
+    assert "data: 掩\n\n" in r.text
+    assert "data: [DONE]" in r.text
+    assert "data: \n\n" not in r.text   # 空 chunk 被过滤
