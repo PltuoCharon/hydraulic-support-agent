@@ -102,3 +102,25 @@ def test_history_truncation():
     finally:
         cur.execute("DELETE FROM chat_messages WHERE session_id='pytest_trunc'")
         conn.commit()
+
+def test_chat_agent_matched():
+    """Agent：命中工况时走 CBR 匹配，回复锚定真实型号。"""
+    from unittest.mock import patch
+    class FakeResp:
+        content = "基于匹配结果的建议"
+    class FakeLLM:
+        def invoke(self, msgs): return FakeResp()
+    fake_match = {"total": 34, "items": [
+        {"support_model": "ZY21000/38/82D", "similarity": 0.9,
+         "area_name": "补连塔22304", "working_resistance": 21000, "diffs": ["案例采高4.0m(+0.0m)"]}]}
+    with patch("app.routers.chat.get_llm", return_value=FakeLLM()), \
+         patch("app.routers.chat.save_pair"), \
+         patch("app.routers.chat.extract_params",
+               return_value={"coal_thickness": 8.8, "dip_angle": 2}), \
+         patch("app.routers.chat.run_match", return_value=fake_match):
+        r = client.post("/api/chat/", json={"message": "煤层8.8米推荐支架"})
+    assert r.status_code == 200
+    d = r.json()["data"]
+    assert d["matched"] is True
+    assert d["matches"][0]["model"] == "ZY21000/38/82D"
+    assert d["reply"] == "基于匹配结果的建议"
