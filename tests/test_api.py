@@ -84,3 +84,21 @@ def test_chat_stream():
     assert "data: 掩\n\n" in r.text
     assert "data: [DONE]" in r.text
     assert "data: \n\n" not in r.text   # 空 chunk 被过滤
+
+def test_history_truncation():
+    """历史截断：只带最近10轮(20条)进上下文。"""
+    from app.db import get_conn
+    from app.routers.chat import load_history
+    conn = get_conn(); cur = conn.cursor()
+    cur.executemany(
+        "INSERT INTO chat_messages(session_id,role,content) VALUES ('pytest_trunc',%s,%s)",
+        [("user", f"msg{i}") for i in range(25)])
+    conn.commit()
+    try:
+        h = load_history("pytest_trunc")
+        assert len(h) == 20
+        assert h[0][1] == "msg5"
+        assert h[-1][1] == "msg24"
+    finally:
+        cur.execute("DELETE FROM chat_messages WHERE session_id='pytest_trunc'")
+        conn.commit()

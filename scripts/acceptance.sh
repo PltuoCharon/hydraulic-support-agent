@@ -50,4 +50,18 @@ ck "无未提交改动"              "test -z \"\$(git status --porcelain)\""
 ck "7天内有dump备份"           "find backups -name '*.sql' -mtime -7 | grep -q ."
 
 echo ""
+echo "===== 5. W17 LLM 对话 ====="
+ck "chat_messages表存在"  "python -c 'from app.db import get_conn; c=get_conn().cursor(); c.execute(\"SHOW TABLES LIKE %s\", (\"chat_messages\",)); assert c.fetchone()'"
+ck "chat一次性返回code0"  "post /api/chat/ '{\"message\":\"测试\"}' | jqr 'assert d[\"code\"]==0'"
+ck "chat返回session_id"   "post /api/chat/ '{\"message\":\"测试\"}' | jqr 'assert d[\"data\"][\"session_id\"]'"
+ck "chat流式DONE结尾"     "curl -sN -X POST $BASE/api/chat/ -H 'Content-Type: application/json' -d '{\"message\":\"测试\",\"stream\":true}' --max-time 60 | grep -q DONE"
+
 echo "===== 验收结果: PASS=$PASS FAIL=$FAIL ====="
+
+echo "===== 5. W17 LLM 对话 ====="
+check "chat一次性返回" \
+  "$(curl -sL -X POST $BASE/api/chat/ -H 'Content-Type: application/json' \
+     -d '{"message":"测试"}' | grep -c '\"code\":0' || true)" "1"
+check "chat流式DONE结尾" \
+  "$(curl -sN -X POST $BASE/api/chat/ -H 'Content-Type: application/json' \
+     -d '{"message":"测试","stream":true}' --max-time 60 | grep -c 'DONE' || true)" "1"
