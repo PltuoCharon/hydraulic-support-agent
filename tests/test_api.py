@@ -56,11 +56,18 @@ def test_ahp_consistency():
 def test_chat_reply():
     # 只验证接口结构，不验证LLM内容（避免测试依赖外部服务）
     from unittest.mock import patch
-    with patch("app.routers.chat.chat", return_value="测试回复"):
+    class FakeResp:
+        content = "测试回复"
+    class FakeLLM:
+        def invoke(self, msgs): return FakeResp()
+    with patch("app.routers.chat.get_llm", return_value=FakeLLM()), \
+         patch("app.routers.chat.save_pair"):
         r = client.post("/api/chat/", json={"message": "你好"})
     assert r.status_code == 200
     body = r.json()
-    assert body["code"] == 0 and body["data"]["reply"] == "测试回复"
+    assert body["code"] == 0
+    assert body["data"]["reply"] == "测试回复"
+    assert body["data"]["session_id"]
 
 def test_chat_stream():
     """流式模式：验证 SSE 格式与 [DONE] 结尾，不真调 LLM。"""
@@ -70,7 +77,7 @@ def test_chat_stream():
     class FakeLLM:
         def stream(self, msgs):
             return iter([FakeChunk("掩"), FakeChunk("护式"), FakeChunk("")])
-    with patch("app.routers.chat.get_llm", return_value=FakeLLM()):
+    with patch("app.routers.chat.get_llm", return_value=FakeLLM()), patch("app.routers.chat.save_pair"):
         r = client.post("/api/chat/", json={"message": "hi", "stream": True})
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/event-stream")
