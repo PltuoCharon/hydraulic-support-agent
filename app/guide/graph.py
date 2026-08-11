@@ -22,7 +22,7 @@ ASK_PROMPT = """你是液压支架选型顾问，正在收集工况参数。
 def extract_params(text: str, known: dict) -> dict:
     """LLM 抽参数，任何失败安全降级为空 dict。"""
     try:
-        prompt = EXTRACT_PROMPT.format(known=json.dumps(known, ensure_ascii=False)) + text
+        prompt = EXTRACT_PROMPT.replace("{known}", json.dumps(known, ensure_ascii=False)) + text
         txt = get_llm().invoke([("human", prompt)]).content
         m = re.search(r"\{.*\}", txt, re.S)
         d = json.loads(m.group(0)) if m else {}
@@ -37,13 +37,17 @@ def extract_params(text: str, known: dict) -> dict:
             else:
                 out[k] = float(v)
         return out
-    except Exception:
+    except Exception as e:
+        print(f"[extract_params 降级] {type(e).__name__}: {e}")
         return {}
 
 def collect(state: GuideState) -> dict:
     """节点1 参数收集：抽参数→合并→算缺失→缺则LLM追问。"""
     params = dict(state.get("params") or {})
-    last = state["messages"][-1].content if state.get("messages") else ""
+    last = ""
+    if state.get("messages"):
+        m = state["messages"][-1]
+        last = m.content if hasattr(m, "content") else m[1]
     params.update(extract_params(last, params))
     missing = calc_missing(params)
     if missing:
