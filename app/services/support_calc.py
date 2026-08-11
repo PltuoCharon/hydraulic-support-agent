@@ -29,6 +29,7 @@ def recalc(bore_mm: float, pressure_mpa: float = 31.5, n_cylinders: int = 2,
         "resistance_kn": round(s.resistance(), 1),
         "intensity_mpa": round(s.intensity(), 3),
         "note": "公式法估算(非实测)",
+        "source": "公式法估算(非实测), 依据 MT/T 556-1996 液压支架设计规范",
     }
 
 if __name__ == "__main__":

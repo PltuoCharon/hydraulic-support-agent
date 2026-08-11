@@ -237,3 +237,21 @@ def test_chat_messages_saved():
             assert (row["n"] if isinstance(row, dict) else row[0]) == 2
     finally:
         conn.close()
+
+def test_match_has_source():
+    """溯源: 匹配候选带 source(案例库·矿区·工作面)。"""
+    from app.services.matcher import run_match
+    r = run_match(coal_thickness=8.8, dip_angle=2.0, top_n=3)
+    assert all("source" in it and "案例库" in it["source"] for it in r["items"])
+
+def test_knowledge_has_source():
+    """溯源: 知识检索带 source/loc。"""
+    from app.services.knowledge import search
+    rs = search("支护强度")
+    assert rs and all("source" in r for r in rs)
+
+def test_recalc_has_source():
+    """溯源: 公式估算带依据说明。"""
+    from app.services.support_calc import recalc
+    r = recalc(bore_mm=360)
+    assert "source" in r and "估算" in r["source"]

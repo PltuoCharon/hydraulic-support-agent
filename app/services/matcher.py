@@ -119,4 +119,6 @@ def run_match(area_id=None, coal_thickness=None, dip_angle=None, top_n=5) -> dic
             top.append(r)
         if len(top) >= top_n:
             break
+    for it in top:
+        it["source"] = f"案例库: {it['area_name']}·{it['working_face_name']}"
     return {"total": len(results), "items": top}
