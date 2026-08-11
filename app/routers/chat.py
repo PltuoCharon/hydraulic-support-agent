@@ -43,7 +43,13 @@ def save_pair(session_id: str, user_msg: str, ai_msg: str):
 def _run_turn(req: ChatReq) -> dict:
     """跑一轮状态机, 返回统一 data。"""
     sid = req.session_id or uuid.uuid4().hex[:12]
-    state = chat_once(_graph(), sid, req.message)
+    try:
+        state = chat_once(_graph(), sid, req.message)
+    except Exception as e:
+        print(f"[chat] 状态机意外错误: {e}")
+        return {"reply": "系统处理出现异常，请重发消息或换个说法。",
+                "session_id": sid, "stage": "error",
+                "params": {}, "missing": [], "tools": []}
     last = state["messages"][-1]
     reply = last.content if hasattr(last, "content") else str(last[1])
     save_pair(sid, req.message, reply)

@@ -255,3 +255,27 @@ def test_recalc_has_source():
     from app.services.support_calc import recalc
     r = recalc(bore_mm=360)
     assert "source" in r and "估算" in r["source"]
+
+def test_guard_out_of_domain():
+    """越界拒答: 首轮无数字的无关问题, 不进抽参直接拒答。"""
+    from app.guide.graph import collect
+    out = collect({"messages": [("user", "今天天气怎么样")], "params": {}})
+    assert "选型" in out["messages"][0][1]
+    assert out["stage"] == "collect"
+
+def test_llm_retry_fallback():
+    """LLM 兜底: 连续失败后返回友好提示而不抛异常。"""
+    from unittest.mock import patch
+    import app.services.llm as sl
+    with patch.object(sl, "_chat_once", side_effect=TimeoutError("timeout")):
+        r = sl.chat("测试")
+    assert "暂时不可用" in r
+
+def test_recommend_engine_error():
+    """匹配引擎意外错误: 友好降级, 不炸图。"""
+    from unittest.mock import patch
+    import app.guide.graph as gg
+    with patch("app.services.matcher.run_match", side_effect=RuntimeError("db down")):
+        out = gg.recommend({"params": {"coal_thickness": 8.8}})
+    assert out["stage"] == "recommend_failed"
+    assert "不可用" in out["messages"][0][1]

@@ -89,6 +89,11 @@ def collect(state: GuideState) -> dict:
     """参数收集节点: 抽取→合并→缺则追问。"""
     text = _last_text(state)
     params = dict(state.get("params", {}))
+    # 领域闸: 无任何已知参数且消息不含数字(工况数值), 视为越界问题拒答
+    if not params and not any(c.isdigit() for c in text):
+        return {"messages": [("ai", "我是液压支架选型助手，只能回答选型相关问题。"
+                                    "请提供工况参数，如\"煤层厚度8.8米\"。")],
+                "stage": "collect", "missing": calc_missing(params)}
     new = extract_params(text, params)
     params.update({k: v for k, v in new.items() if v is not None})
     missing = calc_missing(params)
@@ -121,6 +126,14 @@ def recommend(state: GuideState) -> dict:
                            dip_angle=params.get("dip_angle"), top_n=3)
     except (ValueError, LookupError) as e:
         return {"messages": [("ai", f"匹配失败：{e}，请调整参数后重试。")],
+                "stage": "recommend_failed"}
+    except Exception as e:
+        print(f"[recommend] 意外错误: {e}")
+        return {"messages": [("ai", "匹配引擎暂时不可用，请稍后重发\"对\"重试。")],
+                "stage": "recommend_failed"}
+    if not result.get("items"):
+        return {"messages": [("ai", "案例库中没有找到相似工况的案例，"
+                                    "可调整参数(如煤层厚度)后重试。")],
                 "stage": "recommend_failed"}
     return {"match_result": result, "stage": "explain"}
 
