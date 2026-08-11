@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.memory import MemorySaver
 
 from app.guide.state import GuideState, PARAM_LABELS, calc_missing
 from app.services.llm import get_llm, chat
@@ -156,19 +157,30 @@ def build_graph():
     g.add_edge("confirm", END)
     g.add_edge("recommend", "explain")
     g.add_edge("explain", END)
-    return g.compile()
+    return g.compile(checkpointer=MemorySaver())
+
+
+def chat_once(graph, session_id: str, text: str) -> dict:
+    """单轮对话: checkpointer 按 thread_id 自动续历史, 返回新状态。"""
+    config = {"configurable": {"thread_id": session_id}}
+    return graph.invoke({"messages": [("user", text)]}, config)
 
 
 if __name__ == "__main__":
     graph = build_graph()
-    state = {"messages": [], "params": {}, "missing": [], "stage": "collect"}
+    sid = "demo-001"
     turns = ["煤层厚度8.8米",
              "倾角2度，低瓦斯",
              "对的"]
     for i, t in enumerate(turns, 1):
-        state["messages"].append(("user", t))
         print(f"=== 轮{i}: {t} ===")
-        state = graph.invoke(state)
+        state = chat_once(graph, sid, t)
         last = state["messages"][-1]
         print("stage:", state.get("stage"), "| 助手:",
               last.content if hasattr(last, "content") else last)
+    # 会话隔离验证: 换 thread_id 应从零开始
+    print("=== 新会话 demo-002 ===")
+    state = chat_once(graph, "demo-002", "你好")
+    last = state["messages"][-1]
+    print("stage:", state.get("stage"), "| 助手:",
+          last.content if hasattr(last, "content") else last)

@@ -184,3 +184,31 @@ def test_guide_recommend():
     out = recommend({"params": {"coal_thickness": 8.8, "dip_angle": 2.0}})
     assert out["stage"] == "explain"
     assert out["match_result"]
+
+def test_guide_checkpointer():
+    """MemorySaver: 同 thread_id 跨轮记住参数; 不同 thread_id 互不干扰。"""
+    from unittest.mock import patch
+    import app.guide.graph as gg
+    class FakeResp:
+        def __init__(self, c): self.content = c
+    class FakeLLM:
+        def __init__(self): self.calls = []
+        def invoke(self, msgs):
+            s = msgs if isinstance(msgs, str) else str(msgs)
+            self.calls.append(s)
+            # 抽取类 prompt 含"用户消息:", 按其中用户输入决定返回
+            if "用户消息:" in s:
+                if "倾角2度" in s:
+                    return FakeResp('{"dip_angle": 2, "gas_level": "低瓦斯"}')
+                return FakeResp('{"coal_thickness": 8.8}')
+            return FakeResp("追问话术")
+    fake = FakeLLM()
+    with patch.object(gg, "get_llm", return_value=fake):
+        graph = gg.build_graph()
+        s1 = gg.chat_once(graph, "t-1", "煤层8.8米")
+        assert s1["missing"]                          # 还缺倾角/瓦斯
+        s2 = gg.chat_once(graph, "t-1", "倾角2度，低瓦斯")
+        assert not s2["missing"]                      # 跨轮记住了煤厚
+        assert s2["params"]["coal_thickness"] == 8.8
+        s3 = gg.chat_once(graph, "t-2", "煤层8.8米")  # 新会话从零开始
+        assert s3["missing"]
