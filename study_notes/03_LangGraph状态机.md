@@ -30,3 +30,14 @@
    patch `get_llm` 一处即可拦截所有 LLM 调用；
 5. **与 /api/chat 共享图实例**：两个接口同一 MemorySaver，
    会话状态互通（W20-D1 换心的关键设计）。
+
+## 踩坑
+1. **肯定词判定要排除数字**：用户说"倾角改成10度"含肯定口吻却是改口，
+   `_is_affirm` 规则：以肯定词开头 且 不含任何数字；
+2. **checkpointer 保存全部 state 字段**（不只是 messages），params/stage
+   跨轮自动恢复；
+3. **图是进程内单例**：改了代码必须重启 uvicorn，否则验收跑的旧逻辑；
+4. **mock 要按入口 patch**：节点统一走 `_chat(llm, prompt)` 后，
+   patch `get_llm` 一处即可拦截所有 LLM 调用；
+5. **与 /api/chat 共享图实例**：两个接口同一 MemorySaver，
+   会话状态互通（W20-D1 换心的关键设计）。

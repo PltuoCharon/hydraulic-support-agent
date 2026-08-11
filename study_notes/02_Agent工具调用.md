@@ -22,5 +22,5 @@ Agent = LLM + 工具集 + 循环执行器。模型每轮决定"直接回答"或"
 2. **max_iterations 必须设**：防止工具结果不满足时死循环烧钱，本项目定 6；
 3. **工具的 docstring 就是给模型看的"使用说明书"**：写清"什么时候调用、
    参数含义、返回什么"，调用准确率明显提高；
-4. **测试绝不打真实 LLM**：patch `app.routers.chat.ask`（换心后改为
-   patch get_llm/_chat 统一入口），用 FakeLLM 按 prompt 内容分支返回。
+4. **测试绝不打真实 LLM**：换心前 patch `app.routers.chat.ask`，换心后
+   patch `get_llm` 统一入口，用 FakeLLM 按 prompt 内容分支返回。
