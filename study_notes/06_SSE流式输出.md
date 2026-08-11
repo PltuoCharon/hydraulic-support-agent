@@ -2,7 +2,7 @@
 
 ## 概念
 Server-Sent Events：HTTP 长连接上服务端持续推送文本帧的协议。
-帧格式 `data: {...}\\n\\n`，`text/event-stream` 媒体类型。
+帧格式 `data: {...}\n\n`，`text/event-stream` 媒体类型。
 对比 WebSocket：单向、基于 HTTP、浏览器原生 EventSource 支持，
 对话打字机效果用它足够。
 
