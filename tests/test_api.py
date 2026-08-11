@@ -177,3 +177,10 @@ def test_guide_route():
                   "_changed": True, "messages": [("user", "倾角改成10度")]}) == "confirm"
     assert route({"missing": [], "stage": "collect",
                   "messages": [("user", "煤层8米倾角2度低瓦斯")]}) == "confirm"
+
+def test_guide_recommend():
+    """recommend 节点: 真实调 run_match 拿到候选。"""
+    from app.guide.graph import recommend
+    out = recommend({"params": {"coal_thickness": 8.8, "dip_angle": 2.0}})
+    assert out["stage"] == "explain"
+    assert out["match_result"]
