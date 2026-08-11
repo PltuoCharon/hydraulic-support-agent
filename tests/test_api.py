@@ -147,3 +147,22 @@ def test_knowledge_search():
     assert hits and "556" in hits[0]["source"]
     assert hits[0]["score"] > 0
     assert search("火星殖民政策") == []
+
+def test_guide_collect():
+    """collect节点：抽到煤厚→追问倾角；抽全→不追问。"""
+    from unittest.mock import patch
+    import app.guide.graph as gg
+    class FakeResp:
+        def __init__(self, c): self.content = c
+    class FakeLLM:
+        def __init__(self): self.n = 0
+        def invoke(self, msgs):
+            self.n += 1
+            # 第一次是抽参数，第二次是追问话术
+            return FakeResp('{"coal_thickness": 8.8}' if self.n == 1 else "请问倾角和瓦斯等级？")
+    fake = FakeLLM()
+    with patch.object(gg, "get_llm", return_value=fake):
+        out = gg.collect({"messages": [("user", "煤层8.8米")], "params": {}})
+    assert out["params"]["coal_thickness"] == 8.8
+    assert out["missing"] == ["dip_angle", "gas_level"]
+    assert "倾角" in out["messages"][-1][1]
