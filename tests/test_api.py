@@ -166,3 +166,14 @@ def test_guide_collect():
     assert out["params"]["coal_thickness"] == 8.8
     assert out["missing"] == ["dip_angle", "gas_level"]
     assert "倾角" in out["messages"][-1][1]
+
+def test_guide_route():
+    """条件边：缺参→ask；等确认+肯定→recommend；等确认+改口→confirm。"""
+    from app.guide.graph import route
+    assert route({"missing": ["dip_angle"]}) == "ask"
+    assert route({"missing": [], "stage": "confirm_pending",
+                  "_changed": False, "messages": [("user", "对的")]}) == "recommend"
+    assert route({"missing": [], "stage": "confirm_pending",
+                  "_changed": True, "messages": [("user", "倾角改成10度")]}) == "confirm"
+    assert route({"missing": [], "stage": "collect",
+                  "messages": [("user", "煤层8米倾角2度低瓦斯")]}) == "confirm"
