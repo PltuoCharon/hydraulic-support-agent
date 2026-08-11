@@ -1,79 +1,73 @@
-"""对话接口。W18-D7：接入四工具Agent（自主工具决策），替换W17固定if-else流程。
-说明：Agent 工具调用为同步阻塞，流式模式采用"完成后分片推送"（真·token级流式
-需 LangGraph，列为后续改进）。"""
-import time, uuid
+"""对话接口。W20-D1: 回答生成由 LangGraph 引导式状态机接管。
+
+- 外壳不变: session_id / stream / chat_messages 持久化;
+- 与 /api/guide 共享同一图实例(同一 MemorySaver), 会话状态互通;
+- data.tools: 本轮完成推荐时为 ["run_matching"], 否则 [];
+- data 新增 stage/params/missing, 便于前端展示进度。
+"""
+import json
+import uuid
+
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
 from app.core.response import ok
 from app.db import get_conn
-from app.agent.agent import ask
+from app.guide.graph import chat_once
+from app.routers.guide import _graph
 
 router = APIRouter()
-HISTORY_ROUNDS = 10
+
 
 class ChatReq(BaseModel):
-    message: str = Field(..., min_length=1, max_length=2000)
+    message: str
     session_id: str | None = None
     stream: bool = False
 
-def load_history(session_id: str) -> list[tuple[str, str]]:
-    conn = get_conn()
-    try:
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT role, content FROM chat_messages WHERE session_id=%s ORDER BY id DESC LIMIT %s",
-            (session_id, HISTORY_ROUNDS * 2))
-        return [(r["role"], r["content"]) for r in reversed(cur.fetchall())]
-    finally:
-        conn.close()
 
-def save_pair(session_id: str, question: str, answer: str):
+def save_pair(session_id: str, user_msg: str, ai_msg: str):
+    """一问一答落库(两条)。"""
     conn = get_conn()
     try:
-        cur = conn.cursor()
-        cur.executemany(
-            "INSERT INTO chat_messages(session_id, role, content) VALUES (%s,%s,%s)",
-            [(session_id, "user", question), (session_id, "assistant", answer)])
+        with conn.cursor() as c:
+            c.execute(
+                "INSERT INTO chat_messages(session_id, role, content) "
+                "VALUES (%s,'user',%s),(%s,'assistant',%s)",
+                (session_id, user_msg, session_id, ai_msg))
         conn.commit()
     finally:
         conn.close()
 
-def sse_answer(answer: str, session_id: str, question: str):
-    """Agent 回答分片推送 + 落库 + [DONE]。"""
-    try:
-        for i in range(0, len(answer), 4):
-            yield f"data: {answer[i:i+4]}\n\n"
-            time.sleep(0.02)
-    except Exception as e:
-        yield f"data: [ERROR] {type(e).__name__}\n\n"
-    finally:
-        if answer:
-            save_pair(session_id, question, answer)
-        yield "data: [DONE]\n\n"
+
+def _run_turn(req: ChatReq) -> dict:
+    """跑一轮状态机, 返回统一 data。"""
+    sid = req.session_id or uuid.uuid4().hex[:12]
+    state = chat_once(_graph(), sid, req.message)
+    last = state["messages"][-1]
+    reply = last.content if hasattr(last, "content") else str(last[1])
+    save_pair(sid, req.message, reply)
+    stage = state.get("stage", "")
+    return {
+        "reply": reply,
+        "session_id": sid,
+        "stage": stage,
+        "params": state.get("params", {}),
+        "missing": state.get("missing", []),
+        "tools": ["run_matching"] if stage == "explained" else [],
+    }
+
 
 @router.post("/")
 def chat_endpoint(req: ChatReq):
-    sid = req.session_id or uuid.uuid4().hex[:16]
-    history = load_history(sid)
-    result = ask(req.message, history)
-    answer = result["answer"]
-    tools = [t for t, _ in result["steps"]]
-    if req.stream:
-        return StreamingResponse(
-            sse_answer(answer, sid, req.message),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-    save_pair(sid, req.message, answer)
-    return ok({"reply": answer, "session_id": sid, "tools": tools})
+    data = _run_turn(req)
+    if not req.stream:
+        return ok(data)
 
-
-# ---- W17-D3 SSE 实验端点（保留备用）----
-@router.get("/stream_demo")
-def stream_demo():
     def gen():
-        for ch in "液压支架选型需考虑煤层厚度、倾角、瓦斯等级。":
-            yield f"data: {ch}\n\n"
-            time.sleep(0.05)
+        for i in range(0, len(data["reply"]), 4):
+            yield f"data: {json.dumps({'chunk': data['reply'][i:i+4]}, ensure_ascii=False)}\n\n"
+        yield f"data: {json.dumps({'session_id': data['session_id'], 'stage': data['stage']}, ensure_ascii=False)}\n\n"
         yield "data: [DONE]\n\n"
+
     return StreamingResponse(gen(), media_type="text/event-stream")
