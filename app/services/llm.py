@@ -17,8 +17,8 @@ def get_llm() -> ChatOpenAI:
     global _LLM
     if _LLM is None:
         _LLM = ChatOpenAI(
-            model="glm-4-flash",
-            temperature=0,
+            model=settings.LLM_MODEL,
+            temperature=settings.LLM_TEMPERATURE,
             api_key=settings.ZHIPUAI_API_KEY,
             base_url=settings.ZHIPUAI_BASE_URL,
         )

@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 
+from app.config import settings
 from app.guide.state import GuideState, PARAM_LABELS, calc_missing
 from app.services.llm import get_llm, chat
 
@@ -123,7 +124,7 @@ def recommend(state: GuideState) -> dict:
     params = state.get("params", {})
     try:
         result = run_match(coal_thickness=params.get("coal_thickness"),
-                           dip_angle=params.get("dip_angle"), top_n=3)
+                           dip_angle=params.get("dip_angle"), top_n=settings.MATCH_TOP_N)
     except (ValueError, LookupError) as e:
         return {"messages": [("ai", f"匹配失败：{e}，请调整参数后重试。")],
                 "stage": "recommend_failed"}

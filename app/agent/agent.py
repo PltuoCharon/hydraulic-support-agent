@@ -37,7 +37,8 @@ def get_agent() -> AgentExecutor:
     """AgentExecutor 单例。return_intermediate_steps=True 供 D6 打印工具调用链。"""
     global _executor
     if _executor is None:
-        llm = ChatOpenAI(model="glm-4-flash", temperature=0,
+        llm = ChatOpenAI(model=settings.LLM_MODEL,
+                        temperature=settings.LLM_TEMPERATURE,
                          api_key=settings.ZHIPUAI_API_KEY,
                          base_url=settings.ZHIPUAI_BASE_URL)
         prompt = ChatPromptTemplate.from_messages([
@@ -49,7 +50,7 @@ def get_agent() -> AgentExecutor:
         agent = create_tool_calling_agent(llm, TOOLS, prompt)
         _executor = AgentExecutor(agent=agent, tools=TOOOLS if False else TOOLS,
                                   verbose=False, return_intermediate_steps=True,
-                                  max_iterations=6, handle_parsing_errors=True)
+                                  max_iterations=settings.AGENT_MAX_ITERATIONS, handle_parsing_errors=True)
     return _executor
 
 def ask(question: str, history: list | None = None) -> dict:
