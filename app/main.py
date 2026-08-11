@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import areas, supports, match, chat
+from app.routers import areas, supports, match, chat, guide
 
 app = FastAPI(
     title="液压支架智能选型 API",
@@ -40,3 +40,4 @@ app.add_middleware(
 
 app.include_router(match.router,    prefix="/api/match",    tags=["CBR匹配"])
 app.include_router(chat.router,     prefix="/api/chat",     tags=["对话"])
+app.include_router(guide.router,    prefix="/api/guide",   tags=["引导选型"])

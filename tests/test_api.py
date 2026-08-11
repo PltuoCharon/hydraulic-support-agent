@@ -212,3 +212,30 @@ def test_guide_checkpointer():
         assert s2["params"]["coal_thickness"] == 8.8
         s3 = gg.chat_once(graph, "t-2", "煤层8.8米")  # 新会话从零开始
         assert s3["missing"]
+
+def test_guide_api():
+    """/api/guide: 首轮追问, 返回 session_id; 同 session 二轮补齐进确认。"""
+    from unittest.mock import patch
+    import app.guide.graph as gg
+    import app.routers.guide as gr
+    class FakeResp:
+        def __init__(self, c): self.content = c
+    class FakeLLM:
+        def invoke(self, msgs):
+            s = msgs if isinstance(msgs, str) else str(msgs)
+            if "用户消息:" in s:
+                if "倾角2度" in s:
+                    return FakeResp('{"dip_angle": 2, "gas_level": "低瓦斯"}')
+                return FakeResp('{"coal_thickness": 8.8}')
+            return FakeResp("请问倾角和瓦斯等级？")
+    with patch.object(gg, "get_llm", return_value=FakeLLM()):
+        gr._GRAPH = gg.build_graph()
+        r1 = client.post("/api/guide", json={"message": "煤层8.8米"})
+        assert r1.status_code == 200
+        d1 = r1.json()["data"]
+        assert d1["session_id"] and d1["missing"]
+        r2 = client.post("/api/guide", json={"message": "倾角2度，低瓦斯",
+                                             "session_id": d1["session_id"]})
+        d2 = r2.json()["data"]
+        assert d2["stage"] == "confirm_pending"
+        assert d2["params"]["coal_thickness"] == 8.8

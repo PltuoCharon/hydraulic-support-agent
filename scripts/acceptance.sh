@@ -61,3 +61,9 @@ ck "chat概念题不用工具"   "post /api/chat/ '{\"message\":\"什么是支�
 
 echo "===== 验收结果: PASS=$PASS FAIL=$FAIL ====="
 
+
+echo "== W19 引导式对话状态机 =="
+ck "guide图构建"       "python -c 'from app.guide.graph import build_graph; build_graph()' 2>/dev/null"
+ck "guide路由挂载"     "grep -q 'guide.router' app/main.py"
+ck "状态机设计文档"    "test -f docs/对话状态机设计.md"
+ck "W19周报"          "test -f docs/W19周报.md"
