@@ -1,26 +1,18 @@
 <script setup>
-// props: 父组件传进来的数据（只读，子组件不许改）
 defineProps({
   areas: { type: Array, required: true },
   show: { type: Boolean, default: true },
 })
-
-// emit: 子组件向父组件抛事件（数据变更请求）
 const emit = defineEmits(['select'])
-
-const pick = (area) => emit('select', area)
+const pick = (row) => emit('select', row)
 </script>
 
 <template>
-  <ul v-if="show">
-    <li v-for="a in areas" :key="a.id" @click="pick(a)" class="row">
-      {{ a.area_name }} —— 煤层 {{ a.coal_thickness }}m
-    </li>
-  </ul>
-  <p v-else>列表已隐藏</p>
+  <el-table v-if="show" :data="areas" @row-click="pick"
+            style="max-width: 600px" stripe>
+    <el-table-column prop="id" label="ID" width="60" />
+    <el-table-column prop="area_name" label="矿区" />
+    <el-table-column prop="coal_thickness" label="煤层厚度(m)" width="120" />
+  </el-table>
+  <el-empty v-else description="列表已隐藏" />
 </template>
-
-<style scoped>
-.row { cursor: pointer; padding: 4px 0; }
-.row:hover { color: #42b883; }
-</style>

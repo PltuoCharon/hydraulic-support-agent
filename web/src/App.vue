@@ -22,7 +22,9 @@ const onSelect = (area) => { selected.value = area }
   <h1>{{ title }}</h1>
   <p>矿区数量：{{ state.areas.length }}</p>
 
-  <button @click="toggle">{{ showList ? '隐藏' : '显示' }}列表</button>
+  <el-button type="primary" @click="toggle">
+    {{ showList ? '隐藏' : '显示' }}列表
+  </el-button>
 
   <!-- props 传入 + emit 监听 -->
   <AreaList :areas="state.areas" :show="showList" @select="onSelect" />
