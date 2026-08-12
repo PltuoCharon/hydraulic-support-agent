@@ -9,7 +9,7 @@ router = APIRouter()
 
 class MatchReq(BaseModel):
     area_id: int | None = None
-    coal_thickness: float | None = Field(None, gt=0.5, lt=12)
+    coal_thickness: float | None = Field(None, gt=0.5, lt=25)
     dip_angle: float | None = Field(None, ge=0, le=45)
     top_n: int = Field(5, ge=1, le=20)
 
