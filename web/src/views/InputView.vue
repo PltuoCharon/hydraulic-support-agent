@@ -125,7 +125,7 @@ const reset = () => formRef.value.resetFields()
       <el-input-number v-model="form.face_length" :step="5" :min="20" :max="500" />
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" :loading="loading" @click="submit">开始匹配</el-button>
+      <el-button type="primary" :loading="loading" :disabled="loading" @click="submit">开始匹配</el-button>
       <el-button @click="reset">重置</el-button>
     </el-form-item>
   </el-form>

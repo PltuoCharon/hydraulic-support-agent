@@ -39,6 +39,8 @@ const goFill = () => router.push('/input')
   <p>共 {{ areas.length }} 个矿区，点击卡片选中，自动带出工况参数</p>
   <el-button @click="load" style="margin-bottom: 12px">刷新</el-button>
 
+  <el-empty v-if="!loading && areas.length === 0"
+            description="暂无矿区数据，请确认后端已启动后点刷新" />
   <div v-loading="loading" class="grid">
     <el-card v-for="a in areas" :key="a.id"
              :class="['area-card', { active: selected?.id === a.id }]"

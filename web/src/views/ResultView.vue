@@ -27,6 +27,11 @@ const simType = (s) => s >= 0.7 ? 'success' : s >= 0.5 ? 'warning' : 'info'
       <el-descriptions-item label="候选数">{{ store.result.total }}</el-descriptions-item>
     </el-descriptions>
 
+    <el-empty v-if="items.length === 0"
+              description="案例库中没有相似工况，可调整参数重试">
+      <el-button type="primary" @click="router.push('/input')">调整参数</el-button>
+    </el-empty>
+
     <el-card v-for="(it, i) in items" :key="it.case_id" style="margin-bottom: 12px">
       <template #header>
         <b>#{{ i + 1 }} {{ it.support_model }}</b>
