@@ -31,4 +31,6 @@ export const getAreas = (keyword = '') =>
 
 export const getAreaDetail = (id) => http.get(`/api/areas/${id}/`)
 
+export const postMatch = (payload) => http.post('/api/match/', payload)
+
 export default http

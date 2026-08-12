@@ -1,5 +1,12 @@
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { postMatch } from '../api'
+import { useMatchStore } from '../store/match'
+
+const router = useRouter()
+const store = useMatchStore()
 
 const formRef = ref(null)
 const loading = ref(false)
@@ -41,10 +48,23 @@ const rules = {
   ],
 }
 
-// D3: 提交到 /api/match（当前版本由 厚度+倾角 驱动，其余字段为工况档案）
 const submit = async () => {
   await formRef.value.validate()
-  console.log('submit', form)
+  loading.value = true
+  try {
+    const payload = {
+      coal_thickness: form.coal_thickness,
+      dip_angle: form.dip_angle,
+      top_n: 5,
+    }
+    const data = await postMatch(payload)
+    store.setResult({ ...form }, data)
+    router.push('/result')
+  } catch (e) {
+    ElMessage.error('匹配失败：' + (e.response?.data?.detail || e.message))
+  } finally {
+    loading.value = false
+  }
 }
 const reset = () => formRef.value.resetFields()
 </script>
