@@ -1,7 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import { getAreas } from '../api'
+import { useMatchStore } from '../store/match'
+
+const router = useRouter()
+const store = useMatchStore()
 
 const areas = ref([])
 const loading = ref(false)
@@ -20,8 +25,13 @@ const load = async () => {
 }
 onMounted(load)
 
-// D5: 选中后拉工况条件回填表单
-const onSelect = (area) => { selected.value = area }
+// 选中 → 工况字段入 store → 跳表单页(用户可再修改)
+const onSelect = (area) => {
+  selected.value = area
+  store.prefillFromArea(area)
+}
+
+const goFill = () => router.push('/input')
 </script>
 
 <template>
@@ -47,7 +57,11 @@ const onSelect = (area) => { selected.value = area }
   </div>
 
   <el-alert v-if="selected" type="success" :closable="false" style="margin-top: 16px"
-            :title="`已选中：${selected.area_name}（煤层 ${selected.coal_thickness}m，倾角 ${selected.dip_angle}°）`" />
+            :title="`已选中：${selected.area_name}（煤层 ${selected.coal_thickness}m，倾角 ${selected.dip_angle}°）`">
+    <el-button type="primary" size="small" style="margin-top: 8px" @click="goFill">
+      带参数去匹配 →
+    </el-button>
+  </el-alert>
 </template>
 
 <style scoped>

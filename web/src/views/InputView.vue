@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { postMatch } from '../api'
@@ -7,6 +7,16 @@ import { useMatchStore } from '../store/match'
 
 const router = useRouter()
 const store = useMatchStore()
+
+// 矿区路径回填: store 里有预填条件则灌进表单(可再修改)
+onMounted(() => {
+  if (store.conditions) {
+    Object.assign(form, store.conditions)
+    if (store.fromArea) {
+      ElMessage.success(`已带入【${store.fromArea.area_name}】工况参数，可修改后匹配`)
+    }
+  }
+})
 
 const formRef = ref(null)
 const loading = ref(false)
