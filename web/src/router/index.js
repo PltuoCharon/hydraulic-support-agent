@@ -6,7 +6,8 @@ const routes = [
     meta: { title: '工况输入' } },
   { path: '/areas', name: 'areas', component: () => import('../views/AreasView.vue'),
     meta: { title: '矿区选择' } },
-  { path: '/result', name: 'result', component: () => import('../views/ResultView.vue'),
+  { path: '/compare', component: () => import('../views/CompareView.vue') },
+  { path: '/result', name: 'result', component: () => import('../views/ResultView.vue') }
     meta: { title: '推荐结果' } },
 ]
 
