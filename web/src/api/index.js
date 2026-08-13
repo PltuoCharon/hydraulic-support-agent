@@ -36,4 +36,6 @@ export const postMatch = (payload) => http.post('/api/match/', payload)
 export const getRequirement = (thickness) =>
   http.get('/api/requirement/', { params: { coal_thickness: thickness } })
 
+export const postRecalc = (payload) => http.post('/api/recalc/', payload)
+
 export default http

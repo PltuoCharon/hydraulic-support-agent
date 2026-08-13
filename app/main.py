@@ -77,3 +77,49 @@ def _req_values(thickness):
 @app.get("/api/requirement/")
 def get_requirement(coal_thickness: float):
     return {"code": 0, "data": _req_values(coal_thickness), "msg": "ok"}
+
+
+# ===== W23-D6 部件重算：改缸径/立柱数/泵压 → 链式重算参数 =====
+import math
+from pydantic import BaseModel
+
+class RecalcReq(BaseModel):
+    support_model: str
+    bore: float
+    column_count: int
+    pump_pressure: float
+    coal_thickness: float = 8.0
+
+@app.post("/api/recalc/")
+def recalc(req: RecalcReq):
+    par = _load_params()
+    par.setdefault("eta", 0.9)
+    par.setdefault("setting_ratio", 0.7)
+
+    # 链式：初撑力 -> 工作阻力 -> 支护强度
+    setting_load = req.column_count * req.pump_pressure * math.pi \
+        * (req.bore / 1000.0) ** 2 / 4.0 * 1000.0          # kN
+    working_resistance = setting_load / par["setting_ratio"]  # kN
+    top_area = (par["beam_length"] + par["roof_end_distance"]) * par["center_distance"]
+    intensity = working_resistance * par["eta"] / top_area / 1000.0  # MPa
+
+    req_v = _req_values(req.coal_thickness)
+    alarms = []
+    if working_resistance < req_v["resistance"]:
+        alarms.append({"param": "工作阻力", "value": round(working_resistance, 1),
+                       "required": req_v["resistance"]})
+    if intensity < req_v["intensity"]:
+        alarms.append({"param": "支护强度", "value": round(intensity, 3),
+                       "required": req_v["intensity"]})
+
+    return {"code": 0, "msg": "ok", "data": {
+        "new_params": {
+            "setting_load": round(setting_load, 1),
+            "working_resistance": round(working_resistance, 1),
+            "intensity": round(intensity, 3),
+        },
+        "required": req_v,
+        "alarms": alarms,
+        "inputs": {"bore": req.bore, "column_count": req.column_count,
+                   "pump_pressure": req.pump_pressure},
+    }}

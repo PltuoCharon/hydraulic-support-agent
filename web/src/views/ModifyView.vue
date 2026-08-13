@@ -1,17 +1,36 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useMatchStore } from '../store/match'
+import { getRequirement, postRecalc } from '../api'
 
 const router = useRouter()
 const store = useMatchStore()
 
-// 修改对象 = 结果页勾选的第一个支架；没勾选就取推荐第一
 const target = computed(() => store.compare[0] || store.result?.items?.[0] || null)
 
 const form = reactive({ bore: 360, column_count: 4, pump_pressure: 31.5 })
+const result = ref(null)      // recalc 返回
+const baseline = ref(null)    // 首次结果作基线，用于"已变化"判断
 const submitting = ref(false)
+
+onMounted(async () => {
+  if (!store.required && store.conditions?.coal_thickness) {
+    try {
+      const req = await getRequirement(store.conditions.coal_thickness)
+      store.setRequired(req || null)
+    } catch (e) { /* 静默 */ }
+  }
+  runRecalc()   // 进页先算一次基线
+})
+
+const isChanged = (k) => {
+  if (!baseline.value || !result.value) return false
+  return Math.abs(baseline.value.new_params[k] - result.value.new_params[k]) > 0.05
+}
+const alarmList = computed(() => result.value?.alarms || [])
+const alarmParam = (k) => alarmList.value.find(a => a.param === k)
 
 const rules = {
   bore: [{ required: true, type: 'number', min: 100, max: 500, message: '缸径 100~500 mm', trigger: 'blur' }],
@@ -19,24 +38,28 @@ const rules = {
   pump_pressure: [{ required: true, type: 'number', min: 10, max: 40, message: '泵站压力 10~40 MPa', trigger: 'blur' }],
 }
 
-// D6 接入 /api/recalc；当前占位
-const onRecalc = () => {
+const runRecalc = async () => {
   submitting.value = true
-  setTimeout(() => {
+  try {
+    const data = await postRecalc({
+      support_model: target.value?.support_model,
+      bore: form.bore, column_count: form.column_count,
+      pump_pressure: form.pump_pressure,
+      coal_thickness: store.conditions?.coal_thickness ?? 8.0,
+    })
+    if (!baseline.value) baseline.value = JSON.parse(JSON.stringify(data))
+    result.value = data
+    if (data.alarms?.length) {
+      ElMessage.error(`不满足工况需求：${data.alarms.map(a => a.param).join('、')}`)
+    } else {
+      ElMessage.success('参数达标，满足工况需求')
+    }
+  } catch (e) {
+    ElMessage.error('重算失败：' + (e.response?.data?.detail || e.message))
+  } finally {
     submitting.value = false
-    ElMessage.info('参数链重算将在下一步接入，当前为 D5 展示版')
-  }, 400)
+  }
 }
-
-const readOnlyRows = computed(() => target.value ? [
-  { k: '工作阻力', v: target.value.working_resistance != null ? target.value.working_resistance + ' kN' : '—' },
-  { k: '支护强度', v: target.value.intensity != null ? target.value.intensity + ' MPa' : '—' },
-  { k: '支架高度', v: target.value.height_min != null && target.value.height_max != null
-                    ? `${target.value.height_min}~${target.value.height_max} m` : '—' },
-  { k: '支架重量', v: target.value.weight != null ? target.value.weight + ' t' : '—' },
-  { k: '中心距',   v: target.value.center_dist != null ? target.value.center_dist + ' m' : '—' },
-  { k: '初撑力',   v: target.value.initial_force != null ? target.value.initial_force + ' kN' : '—' },
-] : [])
 </script>
 
 <template>
@@ -49,13 +72,20 @@ const readOnlyRows = computed(() => target.value ? [
   <template v-else>
     <el-descriptions :column="2" border style="margin-bottom: 16px">
       <el-descriptions-item label="支架型号">{{ target.support_model }}</el-descriptions-item>
-      <el-descriptions-item label="案例">{{ target.area_name }}·{{ target.working_face_name }}</el-descriptions-item>
+      <el-descriptions-item label="工况采高">{{ store.conditions?.coal_thickness }} m</el-descriptions-item>
     </el-descriptions>
 
-    <el-alert v-if="store.required" type="info" :closable="false" style="margin-bottom: 16px"
+    <el-alert v-if="store.required" type="info" :closable="false" style="margin-bottom: 12px"
               :title="`工况需求：支护强度 ≥ ${store.required.intensity} MPa，工作阻力 ≥ ${store.required.resistance} kN`" />
-    <el-alert v-else type="warning" :closable="false" style="margin-bottom: 16px"
-              title="工况需求值未获取到（需先完成一次匹配）" />
+
+    <el-alert v-if="alarmList.length" type="error" :closable="false" style="margin-bottom: 12px"
+              :title="`${alarmList.length} 项不满足工况需求！`">
+      <p v-for="a in alarmList" :key="a.param" style="margin: 2px 0">
+        {{ a.param }}：当前 {{ a.value }} &lt; 需求 {{ a.required }}
+      </p>
+      <el-button size="small" type="danger" style="margin-top: 6px"
+                 @click="form.bore += 40; runRecalc()">建议：缸径 +40mm 重算</el-button>
+    </el-alert>
 
     <el-card style="margin-bottom: 16px">
       <template #header><b>可修改参数（立柱 + 泵站）</b></template>
@@ -73,16 +103,32 @@ const readOnlyRows = computed(() => target.value ? [
           <span style="margin-left: 8px; color: #909399">MPa</span>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="submitting" @click="onRecalc">提交重算</el-button>
+          <el-button type="primary" :loading="submitting" @click="runRecalc">提交重算</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card>
-      <template #header><b>只读参数（由推荐结果带入）</b></template>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item v-for="r in readOnlyRows" :key="r.k" :label="r.k">{{ r.v }}</el-descriptions-item>
-      </el-descriptions>
+      <template #header><b>参数链（链式变化：初撑力 → 工作阻力 → 支护强度）</b></template>
+      <template v-if="result">
+        <p :style="isChanged('setting_load') ? 'background:#fdf6ec; padding:4px 8px' : ''">
+          初撑力：{{ result.new_params.setting_load }} kN
+          <el-tag v-if="isChanged('setting_load')" size="small" type="warning" style="margin-left: 8px">已变化</el-tag>
+        </p>
+        <p :style="isChanged('working_resistance') ? 'background:#fdf6ec; padding:4px 8px' : ''">
+          工作阻力：{{ result.new_params.working_resistance }} kN
+          <el-tag v-if="isChanged('working_resistance')" size="small" type="warning" style="margin-left: 8px">已变化</el-tag>
+          <el-tag v-if="alarmParam('工作阻力')" size="small" type="danger" style="margin-left: 8px">低于需求!</el-tag>
+        </p>
+        <p :style="isChanged('intensity') ? 'background:#fdf6ec; padding:4px 8px' : ''">
+          支护强度：<span :style="alarmParam('支护强度') ? 'color:#f56c6c; font-weight:bold' : ''">
+            {{ result.new_params.intensity }}</span> MPa
+          <el-tag v-if="isChanged('intensity')" size="small" type="warning" style="margin-left: 8px">已变化</el-tag>
+          <el-tag v-if="alarmParam('支护强度')" size="small" type="danger" style="margin-left: 8px">低于需求!</el-tag>
+        </p>
+        <p style="color:#909399; margin: 8px 0 0">公式：初撑力=n·P泵·π/4·D² → 工作阻力=初撑力/初撑比 → 支护强度=F·η/控顶面积</p>
+      </template>
+      <p v-else style="color:#909399; margin: 0">提交后显示</p>
     </el-card>
   </template>
 </template>
