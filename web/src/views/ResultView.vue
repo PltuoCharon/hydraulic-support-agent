@@ -1,13 +1,25 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMatchStore } from '../store/match'
+import { getRequirement } from '../api'
+import CompareBar from '../components/CompareBar.vue'
 
 const router = useRouter()
 const store = useMatchStore()
 
 const items = computed(() => store.result?.items || [])
 const cond = computed(() => store.conditions)
+
+// 需求值自治：进入结果页时若还没有则自己拉（不依赖输入页改动）
+onMounted(async () => {
+  if (!store.required && store.conditions?.coal_thickness) {
+    try {
+      const req = await getRequirement(store.conditions.coal_thickness)
+      store.setRequired(req || null)
+    } catch (e) { /* 静默 */ }
+  }
+})
 
 const simPct = (s) => Math.round((s ?? 0) * 100)
 const simType = (s) => (s ?? 0) >= 0.7 ? 'success' : (s ?? 0) >= 0.5 ? 'warning' : ''
@@ -24,6 +36,11 @@ const paramRows = (it) => [
 
 <template>
   <h2>推荐结果</h2>
+
+  <el-card v-if="items.length" style="margin-bottom: 16px">
+    <template #header><b>Top-N 参数对比</b></template>
+    <CompareBar :items="items" :required="store.required" />
+  </el-card>
 
   <el-empty v-if="!store.result" description="还没有匹配结果">
     <el-button type="primary" @click="router.push('/input')">去输入工况</el-button>

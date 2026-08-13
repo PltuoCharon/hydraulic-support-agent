@@ -33,4 +33,7 @@ export const getAreaDetail = (id) => http.get(`/api/areas/${id}/`)
 
 export const postMatch = (payload) => http.post('/api/match/', payload)
 
+export const getRequirement = (thickness) =>
+  http.get('/api/requirement/', { params: { coal_thickness: thickness } })
+
 export default http
