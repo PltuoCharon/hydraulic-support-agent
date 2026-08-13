@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 // 匹配 store: 工况条件 + 匹配结果, 跨路由共享
 export const useMatchStore = defineStore('match', {
   state: () => ({
+    compare: [],
     conditions: null,   // 提交的工况参数
     result: null,       // /api/match 返回 {total, items}
     fromArea: null,     // 来源矿区(矿区路径选中时记录, D5 用)
@@ -25,6 +26,13 @@ export const useMatchStore = defineStore('match', {
         face_length: area.face_length,
       }
     },
+    toggleCompare(item) {
+      const idx = this.compare.findIndex(c => c.support_model === item.support_model)
+      if (idx >= 0) { this.compare.splice(idx, 1); return }
+      if (this.compare.length >= 3) return   // 雷达图最多叠 3 条
+      this.compare.push(item)
+    },
+    clearCompare() { this.compare = [] },
     setResult(conditions, result) {
       this.conditions = conditions
       this.result = result

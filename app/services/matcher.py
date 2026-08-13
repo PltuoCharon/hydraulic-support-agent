@@ -31,7 +31,8 @@ CASE_SQL = """
 SELECT wc.id AS case_id, wc.working_face_name, wc.support_model_id,
        wc.coal_thickness, wc.dip_angle, wc.roof_condition, wc.gas_level, wc.mining_height,
        a.hardness_f, a.depth, a.mine_pressure, a.area_name,
-       s.model AS support_model, s.type, s.working_resistance, s.intensity, s.weight
+       s.model AS support_model, s.type, s.working_resistance, s.intensity, s.weight,
+       s.height_min, s.height_max, s.center_dist, s.initial_force
 FROM working_conditions wc
 LEFT JOIN mining_areas a ON wc.area_id = a.id
 LEFT JOIN support_models s ON wc.support_model_id = s.id
