@@ -13,6 +13,7 @@ const active = computed(() => route.path)
       <el-menu-item index="/input">工况输入</el-menu-item>
       <el-menu-item index="/areas">矿区选择</el-menu-item>
       <el-menu-item index="/result">推荐结果</el-menu-item>
+      <el-menu-item index="/chat">智能体对话</el-menu-item>
     </el-menu>
     <main class="page">
       <router-view />

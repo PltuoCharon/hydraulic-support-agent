@@ -38,4 +38,6 @@ export const getRequirement = (thickness) =>
 
 export const postRecalc = (payload) => http.post('/api/recalc/', payload)
 
+export const postChat = (message) => http.post('/api/chat/', { message })
+
 export default http
