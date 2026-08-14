@@ -13,6 +13,7 @@ export const useChatStore = defineStore('chat', {
   actions: {
     pushUser(text) { this.messages.push({ role: 'user', text }) },
     pushAssistant(text) { this.messages.push({ role: 'assistant', text }) },
+    pushCard(card) { this.messages.push({ role: 'assistant', card }) },
     setSession(id) { this.sessionId = id },
     clear() { this.messages = []; this.sessionId = null },
   },

@@ -73,7 +73,7 @@ def chat_endpoint(req: ChatReq):
     def gen():
         for i in range(0, len(data["reply"]), 4):
             yield f"data: {json.dumps({'chunk': data['reply'][i:i+4]}, ensure_ascii=False)}\n\n"
-        yield f"data: {json.dumps({'session_id': data['session_id'], 'stage': data['stage']}, ensure_ascii=False)}\n\n"
+        yield f"data: {json.dumps({'session_id': data['session_id'], 'stage': data['stage'], 'params': data['params'], 'missing': data['missing'], 'tools': data['tools']}, ensure_ascii=False)}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")

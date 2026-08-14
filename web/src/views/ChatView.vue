@@ -1,10 +1,13 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue'
 import { useChatStore } from '../store/chat'
-import { streamChat } from '../api'
+import { streamChat, postMatch } from '../api'
+import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 
 const store = useChatStore()
+const router = useRouter()
+const lastMeta = ref(null)
 const input = ref('')
 const sending = ref(false)
 const listEl = ref(null)
@@ -34,7 +37,7 @@ const send = async () => {
       { message: text, session_id: store.sessionId },
       {
         onChunk: (c) => { temp.text += c; scrollBottom() },
-        onMeta: (m) => { if (m.session_id) store.setSession(m.session_id) },
+        onMeta: (m) => { lastMeta.value = m; if (m.session_id) store.setSession(m.session_id) },
       }
     )
   } catch (e) {
@@ -42,6 +45,23 @@ const send = async () => {
   } finally {
     sending.value = false
     scrollBottom()
+    if (lastMeta.value?.stage === 'explained') {
+      const p = lastMeta.value.params || {}
+      const t = { coal_thickness: Number(p.coal_thickness), dip_angle: Number(p.dip_angle) || 0, top_n: 3 }
+      try {
+        const r = await postMatch(t)
+        store.pushCard({
+          items: (r.items || []).map(it => ({
+            model: it.support_model,
+            similarity: Math.round((it.similarity ?? 0) * 100),
+            resistance: it.working_resistance,
+            intensity: it.intensity,
+          })),
+          total: r.total,
+        })
+        scrollBottom()
+      } catch (e) { /* 卡片失败静默，不影响对话 */ }
+    }
   }
 }
 
@@ -53,6 +73,17 @@ onMounted(scrollBottom)
       <div v-for="(m, i) in store.messages" :key="i" class="row" :class="m.role">
         <div class="bubble" :class="m.role">
           <span v-if="m.role === 'user'">{{ m.text }}</span>
+          <div v-else-if="m.card" class="card-block">
+            <div class="card-title">推荐结果（相似工况 {{ m.card.total }} 个）</div>
+            <div v-for="(it, idx) in m.card.items" :key="it.model" class="rec-item">
+              <b>#{{ idx + 1 }} {{ it.model }}</b>
+              <span class="rec-sim">相似度 {{ it.similarity }}%</span>
+              <span>{{ it.resistance != null ? it.resistance + ' kN' : '—' }}</span>
+              <span>{{ it.intensity != null ? it.intensity + ' MPa' : '—' }}</span>
+            </div>
+            <el-button size="small" type="primary" style="margin-top: 8px"
+                       @click="router.push('/result')">去结果页查看对比</el-button>
+          </div>
           <div v-else class="assistant-text" v-html="renderMd(m.text)" />
         </div>
       </div>
@@ -121,6 +152,18 @@ onMounted(scrollBottom)
   background: #f6f8fa; padding: 10px; border-radius: 6px; overflow-x: auto;
   margin: 6px 0;
 }
+
+.card-block {
+  background: #f0f7ff; border: 1px solid #d6e6ff; border-radius: 8px;
+  padding: 10px 14px;
+}
+.card-title { font-weight: 600; color: #303133; margin-bottom: 6px; }
+.rec-item {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  padding: 4px 0; border-bottom: 1px dashed #d6e6ff;
+}
+.rec-item:last-child { border-bottom: none; }
+.rec-sim { color: #409eff; font-weight: 500; }
 .input-bar {
   display: flex;
   gap: 8px;
