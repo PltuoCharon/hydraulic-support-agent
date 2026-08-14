@@ -8,6 +8,7 @@ import { marked } from 'marked'
 const store = useChatStore()
 const router = useRouter()
 const lastMeta = ref(null)
+const lastStage = ref('')
 const input = ref('')
 const sending = ref(false)
 const listEl = ref(null)
@@ -37,7 +38,7 @@ const send = async () => {
       { message: text, session_id: store.sessionId },
       {
         onChunk: (c) => { temp.text += c; scrollBottom() },
-        onMeta: (m) => { lastMeta.value = m; if (m.session_id) store.setSession(m.session_id) },
+        onMeta: (m) => { lastMeta.value = m; lastStage.value = m.stage || ''; if (m.session_id) store.setSession(m.session_id) },
       }
     )
   } catch (e) {
@@ -88,6 +89,10 @@ onMounted(scrollBottom)
         </div>
       </div>
     </div>
+
+    <el-alert v-if="lastStage === 'confirm_pending'" type="warning" :closable="false"
+              style="margin-bottom: 8px"
+              title="参数已收集，请回复「对」确认，或直接改口补充（如：倾角是10度）" />
 
     <div class="input-bar">
       <el-input v-model="input" placeholder="输入工况或选型问题，Enter 发送"
