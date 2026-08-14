@@ -2,11 +2,18 @@
 import { ref, nextTick, onMounted } from 'vue'
 import { useChatStore } from '../store/chat'
 import { streamChat } from '../api'
+import { marked } from 'marked'
 
 const store = useChatStore()
 const input = ref('')
 const sending = ref(false)
 const listEl = ref(null)
+
+// Markdown 渲染：marked 同步解析（流式渲染时对未闭合语法宽容）
+const renderMd = (text) => {
+  try { return marked.parse(text || '', { async: false }) }
+  catch (e) { return (text || '').replace(/\n/g, '<br>') }
+}
 
 const scrollBottom = async () => {
   await nextTick()
@@ -46,7 +53,7 @@ onMounted(scrollBottom)
       <div v-for="(m, i) in store.messages" :key="i" class="row" :class="m.role">
         <div class="bubble" :class="m.role">
           <span v-if="m.role === 'user'">{{ m.text }}</span>
-          <pre v-else class="assistant-text">{{ m.text }}</pre>
+          <div v-else class="assistant-text" v-html="renderMd(m.text)" />
         </div>
       </div>
     </div>
@@ -97,9 +104,22 @@ onMounted(scrollBottom)
   box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
 }
 .assistant-text {
-  white-space: pre-wrap;
+  white-space: normal;
   font-family: inherit;
   margin: 0;
+  line-height: 1.7;
+}
+.assistant-text :deep(p) { margin: 4px 0; }
+.assistant-text :deep(ul), .assistant-text :deep(ol) { margin: 4px 0; padding-left: 20px; }
+.assistant-text :deep(li) { margin: 2px 0; }
+.assistant-text :deep(strong) { color: #303133; }
+.assistant-text :deep(code) {
+  background: #f5f5f5; padding: 1px 5px; border-radius: 3px;
+  font-size: 0.92em; font-family: Consolas, Monaco, monospace;
+}
+.assistant-text :deep(pre) {
+  background: #f6f8fa; padding: 10px; border-radius: 6px; overflow-x: auto;
+  margin: 6px 0;
 }
 .input-bar {
   display: flex;
