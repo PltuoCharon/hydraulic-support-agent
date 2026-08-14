@@ -7,6 +7,7 @@ const routes = [
   { path: '/result', name: 'result', component: () => import('../views/ResultView.vue'), meta: { title: '推荐结果' } },
   { path: '/compare', name: 'compare', component: () => import('../views/CompareView.vue'), meta: { title: '支架对比' } },
   { path: '/modify', name: 'modify', component: () => import('../views/ModifyView.vue'), meta: { title: '部件修改' } },
+  { path: '/chat', name: 'chat', component: () => import('../views/ChatView.vue'), meta: { title: '智能体对话' } },
 ]
 
 const router = createRouter({

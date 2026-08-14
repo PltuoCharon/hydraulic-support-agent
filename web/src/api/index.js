@@ -40,4 +40,47 @@ export const postRecalc = (payload) => http.post('/api/recalc/', payload)
 
 export const postChat = (message) => http.post('/api/chat/', { message })
 
+export const streamChat = ({ message, session_id }, { onChunk, onMeta }) => {
+  const base = 'http://127.0.0.1:8000'   // 直连后端；vite 代理对原生 fetch 的 SSE 流支持不保险
+  return new Promise((resolve, reject) => {
+    fetch(`${base}/api/chat/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, session_id, stream: true }),
+    }).then(resp => {
+      if (!resp.ok) { reject(new Error('HTTP ' + resp.status)); return }
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buf = ''
+      let finished = false
+      const pump = () => {
+        if (finished) return
+        reader.read().then(({ done, value }) => {
+          if (done) { resolve(); return }
+          buf += decoder.decode(value, { stream: true })
+          let idx
+          while ((idx = buf.indexOf('\n\n')) >= 0) {
+            const raw = buf.slice(0, idx)
+            buf = buf.slice(idx + 2)
+            for (const line of raw.split('\n')) {
+              if (line.startsWith('data: ')) {
+                const payload = line.slice(6)
+                if (payload === '[DONE]') { finished = true; resolve(); return }
+                try {
+                  const obj = JSON.parse(payload)
+                  if (obj.chunk != null) onChunk(obj.chunk)
+                  if (obj.session_id) onMeta && onMeta(obj)
+                } catch (e) { /* 忽略非 JSON 行 */ }
+              }
+            }
+            if (finished) return
+          }
+          pump()
+        }).catch(reject)
+      }
+      pump()
+    }).catch(reject)
+  })
+}
+
 export default http

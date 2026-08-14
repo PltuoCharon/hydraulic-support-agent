@@ -1,7 +1,7 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue'
 import { useChatStore } from '../store/chat'
-import { postChat } from '../api'
+import { streamChat } from '../api'
 
 const store = useChatStore()
 const input = ref('')
@@ -19,15 +19,19 @@ const send = async () => {
   store.pushUser(text)
   input.value = ''
   sending.value = true
+  const temp = { role: 'assistant', text: '' }
+  store.messages.push(temp)
   scrollBottom()
-
-  // D2 真实接口对接：POST /api/chat/（当前为一次性 JSON，流式改造留待 D2 增强）
   try {
-    const data = await postChat(text)
-    if (data.session_id) store.setSession(data.session_id)
-    store.pushAssistant(data.reply || '(助手没有返回内容)')
+    await streamChat(
+      { message: text, session_id: store.sessionId },
+      {
+        onChunk: (c) => { temp.text += c; scrollBottom() },
+        onMeta: (m) => { if (m.session_id) store.setSession(m.session_id) },
+      }
+    )
   } catch (e) {
-    store.pushAssistant('请求失败：' + (e.response?.data?.detail || e.message))
+    temp.text = '请求失败：' + (e.message || e)
   } finally {
     sending.value = false
     scrollBottom()
@@ -36,7 +40,6 @@ const send = async () => {
 
 onMounted(scrollBottom)
 </script>
-
 <template>
   <div class="chat-page">
     <div ref="listEl" class="chat-list">
@@ -45,9 +48,6 @@ onMounted(scrollBottom)
           <span v-if="m.role === 'user'">{{ m.text }}</span>
           <pre v-else class="assistant-text">{{ m.text }}</pre>
         </div>
-      </div>
-      <div v-if="sending" class="row assistant">
-        <div class="bubble assistant typing">正在思考…</div>
       </div>
     </div>
 
@@ -61,7 +61,6 @@ onMounted(scrollBottom)
     </div>
   </div>
 </template>
-
 <style scoped>
 .chat-page {
   display: flex;
@@ -102,7 +101,6 @@ onMounted(scrollBottom)
   font-family: inherit;
   margin: 0;
 }
-.typing { color: #909399; }
 .input-bar {
   display: flex;
   gap: 8px;
