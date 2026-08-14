@@ -43,7 +43,7 @@ def _explain_recommendation(sid, params):
             f"**{top['support_model']}**（相似度 {sim}%）。\n\n"
             f"该支架工作阻力 {top.get('working_resistance')} kN、"
             f"支护强度 {top.get('intensity')} MPa。\n\n"
-            f"推荐依据：案例库中 **{top.get('area_name')}·{top.get('working_face_name')}** 工作面的实际使用经验"
+            f"推荐依据：案例库中 **{top.get('working_face_name')}** 工作面的实际使用经验"
             f"（数据来源：{top.get('source')}）。"
         )
         return {
