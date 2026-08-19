@@ -129,7 +129,7 @@ onMounted(scrollBottom)
   word-break: break-word;
 }
 .bubble.user {
-  background: #409eff;
+  background: linear-gradient(120deg, #1f4a75, #16324f);
   color: #fff;
   border-top-right-radius: 2px;
 }
@@ -168,7 +168,7 @@ onMounted(scrollBottom)
   padding: 4px 0; border-bottom: 1px dashed #d6e6ff;
 }
 .rec-item:last-child { border-bottom: none; }
-.rec-sim { color: #409eff; font-weight: 500; }
+.rec-sim { color: #1f4a75; font-weight: 500; }
 .input-bar {
   display: flex;
   gap: 8px;

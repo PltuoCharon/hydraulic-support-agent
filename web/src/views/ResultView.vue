@@ -72,7 +72,7 @@ const paramRows = (it) => [
           <el-checkbox :model-value="store.compare.some(c => c.support_model === it.support_model)"
                        @change="store.toggleCompare(it)" />
           <el-button size="small" type="warning" plain
-                     @click="store.toggleCompare(it); router.push('/modify')">去修改</el-button>
+                     @click="router.push('/modify')">去修改</el-button>
           <b>#{{ i + 1 }} {{ it.support_model }}</b>
           <el-tag v-if="i === 0" type="danger" style="margin-left: 8px">推荐</el-tag>
           <div class="sim">
