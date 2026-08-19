@@ -60,7 +60,7 @@ def _load_params():
         conn = pymysql.connect(**_CFG)
         with conn.cursor() as cur:
             cur.execute("SELECT param_name, param_value FROM param_dependencies")
-            p.update({k: v for k, v in cur.fetchall()})
+            p.update({k: float(v) for k, v in cur.fetchall() if v is not None})
         conn.close()
     except Exception as e:
         print("[warn] param_dependencies 读取失败，用默认值:", e)
