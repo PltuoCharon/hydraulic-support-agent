@@ -37,6 +37,25 @@ const paramRows = (it) => [
 <template>
   <h2>推荐结果</h2>
 
+  <div v-if="items.length" class="summary-bar">
+    <div class="summary-left">
+      <span class="summary-label">推荐型号</span>
+      <b class="summary-model">{{ items[0]?.support_model }}</b>
+      <el-tag type="danger" style="margin-left: 8px">Top-1</el-tag>
+    </div>
+    <div class="summary-right">
+      <span class="summary-item">
+        工作阻力 <b>{{ items[0]?.working_resistance }} kN</b>
+      </span>
+      <span class="summary-item">
+        支护强度 <b>{{ items[0]?.intensity }} MPa</b>
+      </span>
+      <span class="summary-item">
+        相似度 <b>{{ simPct(items[0]?.similarity) }}%</b>
+      </span>
+    </div>
+  </div>
+
   <el-card v-if="items.length" style="margin-bottom: 16px">
     <template #header><b>Top-N 参数对比</b></template>
     <CompareBar :items="items" :required="store.required" />
@@ -100,4 +119,20 @@ const paramRows = (it) => [
 <style scoped>
 .card-head { display: flex; align-items: center; gap: 8px; }
 .sim { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.summary-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(120deg, #16324f, #1f4a75); color: #fff;
+  border-radius: 12px; padding: 16px 24px; margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(22, 50, 79, .2);
+}
+.summary-left { display: flex; align-items: center; gap: 10px; }
+.summary-label { color: #9fb6cf; font-size: 13px; }
+.summary-model { font-size: 20px; color: #fff; }
+.summary-right { display: flex; gap: 24px; }
+.summary-item { color: #c7d5e4; font-size: 13px; }
+.summary-item b { color: #fff; font-size: 15px; }
+@media (max-width: 768px) {
+  .summary-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .summary-right { flex-wrap: wrap; gap: 12px; }
+}
 </style>
