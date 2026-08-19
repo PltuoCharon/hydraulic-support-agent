@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useChart } from '../composables/useChart'
+import { BRAND_COLORS } from '../utils/echarts'
 
 const props = defineProps({ items: Array, required: Object })
 const chartEl = ref(null)
@@ -24,6 +25,7 @@ function render() {
   const req = props.required || { resistance: 0, intensity: 0 }
 
   setOption({
+    color: BRAND_COLORS,
     tooltip: { trigger: 'axis' },
     legend: { data: ['工作阻力', '支护强度'] },
     grid: { left: 70, right: 60, bottom: 50 },
@@ -42,7 +44,7 @@ function render() {
           label: { formatter: `需求 ${req.resistance} kN`, position: 'insideEndTop' },
           data: [{ yAxis: req.resistance }],
         },
-        itemStyle: { color: (p) => p.value < req.resistance ? '#f56c6c' : '#409eff' },
+        itemStyle: { color: (p) => p.value < req.resistance ? '#f56c6c' : BRAND_COLORS[0] },
       },
       {
         name: '支护强度', type: 'bar', yAxisIndex: 1, barMaxWidth: 34,
@@ -53,7 +55,7 @@ function render() {
           label: { formatter: `需求 ${req.intensity} MPa`, position: 'insideEndTop' },
           data: [{ yAxis: req.intensity }],
         },
-        itemStyle: { color: (p) => p.value < req.intensity ? '#f56c6c' : '#67c23a' },
+        itemStyle: { color: (p) => p.value < req.intensity ? '#f56c6c' : BRAND_COLORS[1] },
       },
     ],
   })

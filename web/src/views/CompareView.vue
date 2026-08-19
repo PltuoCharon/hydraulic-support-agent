@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMatchStore } from '../store/match'
 import { useChart } from '../composables/useChart'
+import { BRAND_COLORS } from '../utils/echarts'
 
 const router = useRouter()
 const store = useMatchStore()
@@ -48,6 +49,7 @@ function render() {
     value: vals[r].map((v, i) => (v / maxVals[i]).toFixed(3)),
   }))
   setOption({
+    color: BRAND_COLORS,
     legend: { data: data.map(d => d.name), bottom: 0 },
     radar: {
       indicator: DIMS.map(d => ({ name: `${d.name}(${d.unit})`, max: 1 })),

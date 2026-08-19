@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useChatStore } from '../store/chat'
 import { streamChat, postMatch } from '../api'
 import { useRouter } from 'vue-router'
@@ -8,6 +8,7 @@ import { marked } from 'marked'
 const store = useChatStore()
 const router = useRouter()
 const lastMeta = ref(null)
+const controller = ref(null)
 const lastStage = ref('')
 const input = ref('')
 const sending = ref(false)
@@ -30,6 +31,7 @@ const send = async () => {
   store.pushUser(text)
   input.value = ''
   sending.value = true
+  controller.value = new AbortController()
   const temp = { role: 'assistant', text: '' }
   store.messages.push(temp)
   scrollBottom()
@@ -39,11 +41,13 @@ const send = async () => {
       {
         onChunk: (c) => { temp.text += c; scrollBottom() },
         onMeta: (m) => { lastMeta.value = m; lastStage.value = m.stage || ''; if (m.session_id) store.setSession(m.session_id) },
+        signal: controller.value.signal,
       }
     )
   } catch (e) {
     temp.text = '请求失败：' + (e.message || e)
   } finally {
+    controller.value = null
     sending.value = false
     scrollBottom()
     if (lastMeta.value?.stage === 'explained') {
@@ -67,6 +71,8 @@ const send = async () => {
 }
 
 onMounted(scrollBottom)
+// 页面卸载时中止未完成的流式请求，避免泄漏/状态错乱
+onBeforeUnmount(() => { if (controller.value) controller.value.abort() })
 </script>
 <template>
   <div class="chat-page">

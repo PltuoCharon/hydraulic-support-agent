@@ -40,13 +40,14 @@ export const postRecalc = (payload) => http.post('/api/recalc/', payload)
 
 export const postChat = (message) => http.post('/api/chat/', { message })
 
-export const streamChat = ({ message, session_id }, { onChunk, onMeta }) => {
+export const streamChat = ({ message, session_id }, { onChunk, onMeta, signal }) => {
   const base = 'http://127.0.0.1:8000'   // 直连后端；vite 代理对原生 fetch 的 SSE 流支持不保险
   return new Promise((resolve, reject) => {
     fetch(`${base}/api/chat/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, session_id, stream: true }),
+      signal,
     }).then(resp => {
       if (!resp.ok) { reject(new Error('HTTP ' + resp.status)); return }
       const reader = resp.body.getReader()
@@ -76,7 +77,7 @@ export const streamChat = ({ message, session_id }, { onChunk, onMeta }) => {
             if (finished) return
           }
           pump()
-        }).catch(reject)
+        }).catch(err => { if (err.name === 'AbortError') { resolve() } else { reject(err) } })
       }
       pump()
     }).catch(reject)

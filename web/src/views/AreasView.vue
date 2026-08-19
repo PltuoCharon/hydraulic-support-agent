@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { getAreas } from '../api'
@@ -9,6 +9,10 @@ const router = useRouter()
 const store = useMatchStore()
 
 const areas = ref([])
+const keyword = ref('')
+const filtered = computed(() => keyword.value.trim()
+  ? areas.value.filter(a => (a.area_name || a.name || '').includes(keyword.value.trim()))
+  : areas.value)
 const loading = ref(false)
 const selected = ref(null)
 
@@ -36,13 +40,16 @@ const goFill = () => router.push('/input')
 
 <template>
   <h2>矿区选择</h2>
-  <p>共 {{ areas.length }} 个矿区，点击卡片选中，自动带出工况参数</p>
+  <div class="area-toolbar">
+    <p>共 {{ filtered.length }} 个矿区（<b>{{ areas.length }}</b> 总数），点击卡片选中，自动带出工况参数</p>
+    <el-input v-model="keyword" placeholder="搜索矿区名称…" clearable style="max-width: 280px" />
+  </div>
   <el-button @click="load" style="margin-bottom: 12px">刷新</el-button>
 
   <el-empty v-if="!loading && areas.length === 0"
             description="暂无矿区数据，请确认后端已启动后点刷新" />
   <div v-loading="loading" class="grid">
-    <el-card v-for="a in areas" :key="a.id"
+    <el-card v-for="a in filtered" :key="a.id"
              :class="['area-card', { active: selected?.id === a.id }]"
              shadow="hover" @click="onSelect(a)">
       <template #header>
@@ -74,4 +81,8 @@ const goFill = () => router.push('/input')
 }
 .area-card { cursor: pointer; }
 .area-card.active { border: 2px solid #409eff; }
+.area-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; gap: 12px; flex-wrap: wrap;
+}
 </style>
