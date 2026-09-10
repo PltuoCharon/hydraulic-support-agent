@@ -127,3 +127,33 @@ def recalc(req: RecalcReq):
         "inputs": {"bore": req.bore, "column_count": req.column_count,
                    "pump_pressure": req.pump_pressure},
     }}
+
+
+# ===== W25-C2 首页总览统计接口 =====
+@app.get("/api/stats/")
+def get_stats():
+    conn = pymysql.connect(**_CFG)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM support_models")
+            supports = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM support_models WHERE weight IS NOT NULL")
+            has_w = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM support_models WHERE intensity IS NOT NULL")
+            has_i = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM working_conditions")
+            cases = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM param_dependencies")
+            rules = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM mining_areas")
+            areas = cur.fetchone()[0]
+            cur.execute("SELECT manufacturer, COUNT(*) c FROM support_models WHERE manufacturer IS NOT NULL GROUP BY manufacturer ORDER BY c DESC LIMIT 5")
+            vendors = cur.fetchall()
+    finally:
+        conn.close()
+    return {"code": 0, "msg": "ok", "data": {
+        "supports": supports, "weight_coverage": round(has_w/supports*100, 1),
+        "intensity_coverage": round(has_i/supports*100, 1),
+        "cases": cases, "rules": rules, "areas": areas,
+        "vendors": [{"name": v[0], "count": v[1]} for v in vendors],
+    }}
