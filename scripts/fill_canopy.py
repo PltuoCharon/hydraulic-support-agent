@@ -16,7 +16,7 @@ def seg(hmax):
     if hmax is None:  return "mid"
     h = float(hmax)
     if h < 1.8:  return "thin"
-    if h < 3.5:  return "mid"
+    if h < 4.0:  return "mid"  # W25-D3留一法标定: ZY锚点h3.5/4.0实测均为mid值
     if h <= 6.5: return "large"
     return "xlarge"
 
@@ -57,7 +57,7 @@ for rid, model, hmax in rows:
     if APPLY:
         cur.execute(
             "UPDATE support_models SET canopy_len=%s, "
-            "source=LEFT(CONCAT(COALESCE(source,''),' | 控顶长度按架型经验估算'),100) "
+            "source=CONCAT(LEFT(COALESCE(source,''),74), IF(CHAR_LENGTH(source)>74,'…',''), ' | 控顶长度按架型经验估算') "
             "WHERE id=%s AND canopy_len IS NULL",   # 双保险: 并发下也不覆盖已有值
             (val, rid))
         assert cur.rowcount <= 1
