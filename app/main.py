@@ -47,29 +47,12 @@ app.include_router(guide.router,    prefix="/api/guide",   tags=["引导选型"]
 # ===== W23-D4/D6 新增：工况需求值 + 部件重算（参数全部从 param_dependencies 读）=====
 import pymysql
 from pydantic import BaseModel
+from app.core.params import Params
 
-_CFG = dict(host=settings.DB_HOST, user=settings.DB_USER,
-            password=settings.DB_PASSWORD, database=settings.DB_NAME, charset="utf8mb4")
-_PARAM_DEFAULTS = {"k1": 8.0, "rock_gamma": 25.0, "beam_length": 5.2,
-                   "roof_end_distance": 0.7, "center_distance": 2.05,
-                   "eta": 0.9, "setting_ratio": 0.7, "safety_factor": 1.2}
 
 def _load_params():
-    """从 param_dependencies 表读参数，未命中用默认值兜底（第8项 eta 闭环）"""
-    p = dict(_PARAM_DEFAULTS)
-    try:
-        conn = pymysql.connect(**_CFG)
-        with conn.cursor() as cur:
-            cur.execute("SELECT param_name, param_value FROM param_dependencies")
-            for _k, _v in cur.fetchall():
-                try:
-                    p[_k] = float(_v)
-                except (TypeError, ValueError):
-                    continue   # 非数值参数跳过，不因一行脏数据导致全表回退默认值
-        conn.close()
-    except Exception as e:
-        print("[warn] param_dependencies 读取失败，用默认值:", e)
-    return p
+    """委托 core.params.Params：唯一参数源，改库即改行为（W26-D6 合并双轨）"""
+    return Params()
 
 def _req_values(thickness):
     """工况需求支护强度与工作阻力（选型论文口径）"""
@@ -98,8 +81,6 @@ class RecalcReq(BaseModel):
 @app.post("/api/recalc/")
 def recalc(req: RecalcReq):
     par = _load_params()
-    par.setdefault("eta", 0.9)
-    par.setdefault("setting_ratio", 0.7)
 
     # 链式：初撑力 -> 工作阻力 -> 支护强度
     setting_load = req.column_count * req.pump_pressure * math.pi \
@@ -133,7 +114,8 @@ def recalc(req: RecalcReq):
 # ===== W25-C2 首页总览统计接口 =====
 @app.get("/api/stats/")
 def get_stats():
-    conn = pymysql.connect(**_CFG)
+    conn = pymysql.connect(host=settings.DB_HOST, user=settings.DB_USER,
+            password=settings.DB_PASSWORD, database=settings.DB_NAME, charset="utf8mb4")
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM support_models")

@@ -3,7 +3,9 @@ from app.config import settings
 
 class Params:
     """计算参数从 param_dependencies 表加载：改库即改行为，公式入库闭环"""
-    _DEFAULTS = {"eta": 0.9, "safety_factor": 1.2}
+    _DEFAULTS = {"k1": 8.0, "rock_gamma": 25.0, "beam_length": 5.2,
+                   "roof_end_distance": 0.7, "center_distance": 2.05,
+                   "eta": 0.9, "setting_ratio": 0.7, "safety_factor": 1.2}
 
     def __init__(self):
         self._data = dict(self._DEFAULTS)
@@ -33,3 +35,6 @@ class Params:
         if name in self._data:
             return self._data[name]
         raise AttributeError(f"未知参数: {name}")
+
+    def __getitem__(self, name):
+        return getattr(self, name)
