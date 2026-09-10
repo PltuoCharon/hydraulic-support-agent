@@ -20,7 +20,9 @@ def seg(hmax):
     if h <= 6.5: return "large"
     return "xlarge"
 
-ZY_RULE  = {"thin": 3.9, "mid": 4.1, "large": 5.0, "xlarge": 5.9}
+ZY_RULE  = {"thin": 3.9, "mid": 4.2, "large": 4.8, "xlarge": 4.8}
+ZZ_RULE  = {"thin": 3.6, "mid": 4.2, "large": 4.5, "xlarge": 4.5}
+ZF_RULE  = {"thin": 5.0, "mid": 5.2, "large": 5.4, "xlarge": 5.4}
 
 def estimate(model, height_max):
     """返回 (估算值, 规则说明) 或 (None, 原因)"""
@@ -28,15 +30,15 @@ def estimate(model, height_max):
     s = seg(height_max)
     # 注意前缀匹配顺序: 长的先匹配
     if re.match(r"^ZF", m):                       # 放顶煤(含ZFS/ZFY/ZFA)
-        return 5.9, "放顶煤架型,经验区间5.5~6.3取中值"
+        return ZF_RULE[s], f"放顶煤架型,{s}段(单锚点5.20外推,低置信)"
     if re.match(r"^ZZ", m):                       # 支撑掩护式(含ZZS)
-        return round(ZY_RULE[s] + 0.3, 1), f"支撑掩护式,同段掩护式+0.3"
+        return ZZ_RULE[s], f"支撑掩护式,{s}段锚点标定"
     if re.match(r"^ZY[GT]", m):                   # 过渡/端头(ZYG/ZYT)
         return round(ZY_RULE[s] + 0.2, 1), f"过渡/端头架,同段掩护式+0.2"
     if re.match(r"^ZY|^ZJY", m):                  # 掩护式(含ZYQ/ZYL)
         return ZY_RULE[s], f"掩护式,{s}段经验区间中值"
     if re.match(r"^ZD", m):                       # 垛式
-        return 3.8, "垛式支架,经验区间3.6~4.0取中值"
+        return None, "垛式支架无实测锚点,跳过待人工标定"
     return None, "未知架型前缀,跳过待人工"
 
 conn = pymysql.connect(host=settings.DB_HOST, user=settings.DB_USER,
