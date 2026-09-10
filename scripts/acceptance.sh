@@ -38,7 +38,8 @@ ck "CORS预配置"                "curl -s -H 'Origin: http://localhost:5173' -I
 echo "===== 3. W15 CBR引擎 ====="
 ck "AHP一致性CR<0.1"           "python -c 'from app.services.ahp import ahp_weights,JUDGE_MATRIX; assert ahp_weights(JUDGE_MATRIX)[\"CR\"]<0.1'"
 ck "/api/match返回TopN"        "post /api/match/ '{\"area_id\":1,\"top_n\":5}' | jqr 'assert d[\"data\"][\"total\"]>0 and len(d[\"data\"][\"items\"])<=5'"
-ck "LOO留一法(total<36)"       "post /api/match/ '{\"area_id\":1,\"top_n\":5}' | jqr 'assert d[\"data\"][\"total\"]<36'"
+CASE_N=$(sudo mysql hydraulic_support -sN -e "SELECT COUNT(*) FROM working_conditions")
+ck "LOO留一法(total<库内总数)"  "post /api/match/ '{\"area_id\":1,\"top_n\":5}' | jqr 'assert d[\"data\"][\"total\"]<'$CASE_N"
 ck "相似度降序"                "post /api/match/ '{\"area_id\":1,\"top_n\":5}' | jqr 's=[i[\"similarity\"] for i in d[\"data\"][\"items\"]]; assert s==sorted(s,reverse=True)'"
 ck "diffs可解释字段"           "post /api/match/ '{\"area_id\":1,\"top_n\":3}' | grep -q diffs"
 ck "互斥校验422"               "test \$(post /api/match/ '{\"area_id\":1,\"coal_thickness\":3}' -o /dev/null -w '%{http_code}') = 422 || test \$(curl -sL -o /dev/null -w '%{http_code}' -X POST $BASE/api/match/ -H 'Content-Type: application/json' -d '{\"area_id\":1,\"coal_thickness\":3}') = 422"
