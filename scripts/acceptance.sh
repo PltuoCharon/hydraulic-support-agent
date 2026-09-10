@@ -47,7 +47,7 @@ echo "===== 4. 测试与工程质量 ====="
 echo "  [INFO] pytest: $(python -m pytest tests/ -q 2>/dev/null | tail -1)"
 ck "pytest全绿"                "python -m pytest tests/ -q 2>/dev/null | grep -q passed"
 ck "无未提交改动"              "test -z \"\$(git status --porcelain)\""
-ck "7天内有dump备份"           "find backups -name '*.sql' -mtime -7 | grep -q ."
+ck "7天内有dump备份"           "find \/home/zhangyongbo/backup -name '*.sql' -mtime -7 | grep -q ."
 
 echo ""
 echo "===== 5. W17 LLM 对话 ====="
