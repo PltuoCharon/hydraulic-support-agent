@@ -21,7 +21,7 @@ def seg(hmax):
     return "xlarge"
 
 ZY_RULE  = {"thin": 3.9, "mid": 4.2, "large": 4.8, "xlarge": 4.8}
-ZZ_RULE  = {"thin": 3.6, "mid": 4.2, "large": 4.5, "xlarge": 4.5}
+ZZ_RULE  = {"thin": 3.6, "mid": 3.9, "large": 4.5, "xlarge": 4.5}  # W25-D3留一法重标定
 ZF_RULE  = {"thin": 5.0, "mid": 5.2, "large": 5.4, "xlarge": 5.4}
 
 def estimate(model, height_max):

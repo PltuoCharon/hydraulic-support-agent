@@ -25,11 +25,11 @@ conn = pymysql.connect(host=settings.DB_HOST, user=settings.DB_USER,
                        password=settings.DB_PASSWORD,
                        database=settings.DB_NAME, charset="utf8mb4")
 cur = conn.cursor()
-cur.execute("""SELECT id, model, working_resistance, center_dist, canopy_len, intensity
+cur.execute("""SELECT id, model, working_resistance, center_dist, canopy_len, intensity, source
                FROM support_models ORDER BY working_resistance""")
 
 results, skipped = [], []
-for rid, model, R, B, L, q_db_raw in cur.fetchall():
+for rid, model, R, B, L, q_db_raw, src in cur.fetchall():
     Rf, Bf, Lf = parse_number(R), parse_number(B), parse_number(L)
     q_db = parse_number(q_db_raw)
     if not Rf or not Bf or not Lf:
@@ -38,7 +38,8 @@ for rid, model, R, B, L, q_db_raw in cur.fetchall():
     if q_db is None:
         skipped.append((model, "intensity为空(待D5回填)")); continue
     dev = (q_calc - q_db) / q_db * 100
-    results.append((model, Rf, Bf, Lf, q_db, round(q_calc, 4), round(dev, 1)))
+    tier = "估算L" if (src and "按架型经验估算" in src) else "实测L"
+    results.append((model, Rf, Bf, Lf, q_db, round(q_calc, 4), round(dev, 1), tier))
 cur.close(); conn.close()
 
 # ---- 偏差分布 ----
@@ -57,6 +58,13 @@ for k, v in buckets.items():
     print(f"  {k:>12}: {'#'*v} {v}")
 
 review = [r for r in results if abs(r[6]) > 20]
+for tier in ("实测L", "估算L"):
+    sub = [r for r in results if r[7] == tier]
+    if not sub: continue
+    big = sum(1 for r in sub if abs(r[6]) > 20)
+    mean = sum(abs(r[6]) for r in sub) / len(sub)
+    print(f"  [{tier}] {len(sub)} 条, 平均|偏差|={mean:.1f}%, >20%占 {big} 条")
+
 print(f"\n偏差>20%核查清单 ({len(review)} 条):")
 for r in review:
     print(f"  {r[0]:<22} 库内q={r[4]:<7} 复算q={r[5]:<7} 偏差={r[6]:+}%")
@@ -67,7 +75,7 @@ os.makedirs("docs/thesis_data", exist_ok=True)
 fp = f"docs/thesis_data/intensity_check_{datetime.date.today():%Y%m%d}.csv"
 with open(fp, "w", newline="", encoding="utf-8-sig") as f:
     w = csv.writer(f)
-    w.writerow(["model", "R_kN", "B_m", "L_m", "q_db_MPa", "q_calc_MPa", "dev_pct"])
+    w.writerow(["model", "R_kN", "B_m", "L_m", "q_db_MPa", "q_calc_MPa", "dev_pct", "L_tier"])
     w.writerows(results)
 print(f"\n已归档: {fp}")
 if skipped[:10]:
