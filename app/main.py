@@ -1,3 +1,4 @@
+from app.config import settings
 from fastapi import FastAPI
 from app.routers import areas, supports, match, chat, guide
 
@@ -47,8 +48,8 @@ app.include_router(guide.router,    prefix="/api/guide",   tags=["引导选型"]
 import pymysql
 from pydantic import BaseModel
 
-_CFG = dict(host="localhost", user="hs_user", password="zyb123",
-            database="hydraulic_support", charset="utf8mb4")
+_CFG = dict(host=settings.DB_HOST, user=settings.DB_USER,
+            password=settings.DB_PASSWORD, database=settings.DB_NAME, charset="utf8mb4")
 _PARAM_DEFAULTS = {"k1": 8.0, "rock_gamma": 25.0, "beam_length": 5.2,
                    "roof_end_distance": 0.7, "center_distance": 2.05,
                    "eta": 0.9, "setting_ratio": 0.7, "safety_factor": 1.2}
