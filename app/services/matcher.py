@@ -37,6 +37,7 @@ FROM working_conditions wc
 LEFT JOIN mining_areas a ON wc.area_id = a.id
 LEFT JOIN support_models s ON wc.support_model_id = s.id
 WHERE wc.support_model_id IS NOT NULL
+  AND (a.is_test = 0 OR a.is_test IS NULL)  -- W27-D1: 盲测案例不入候选池,防开卷
 """
 
 def build_diffs(target, c, cat_scores):
