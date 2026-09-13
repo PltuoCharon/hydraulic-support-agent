@@ -1,63 +1,84 @@
-"""回测：留一法(LOO) Top-1/Top-3 命中率，三组权重对比。W24 验收闸门2。"""
-import os, sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app.db import get_conn
+"""W27-D2 盲测回测: 9个盲测区出题, Top-1/Top-3命中判定, 未命中归因。
+用法: PYTHONPATH=. python scripts/backtest.py
+输出: docs/thesis_data/backtest_data-v1.csv"""
+import sys, csv, os
+sys.path.insert(0, '.')
+from app.config import settings
+import pymysql
 from app.services.matcher import run_match
 
-def load_cases():
-    """标注集：真实工作面用架（working_conditions -> support_models）"""
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT wc.id, wc.coal_thickness, wc.dip_angle, s.model AS support_model
-                FROM working_conditions wc
-                JOIN support_models s ON wc.support_model_id = s.id
-                WHERE wc.support_model_id IS NOT NULL
-            """)
-            return cur.fetchall()
-    finally:
-        conn.close()
+def family(model):
+    """型号族: 系列字母+阻力数, 如 ZY12000/28/58 -> ZY12000"""
+    if not model:
+        return ""
+    return model.split("/")[0]
 
-def run_backtest(mode):
-    os.environ["MATCH_WEIGHTS"] = mode
-    cases = load_cases()
-    hit1 = hit3 = total = 0
-    misses = []
-    for c in cases:
-        try:
-            res = run_match(coal_thickness=c["coal_thickness"], dip_angle=c["dip_angle"] or 0, top_n=3)
-        except Exception as e:
-            print(f"[warn] case {c['id']} 匹配失败: {e}")
+def main():
+    conn = pymysql.connect(host=settings.DB_HOST, user=settings.DB_USER,
+        password=settings.DB_PASSWORD, database=settings.DB_NAME,
+        cursorclass=pymysql.cursors.DictCursor)
+    cur = conn.cursor()
+    cur.execute("""SELECT wc.id AS cid, wc.area_id, wc.working_face_name,
+                          s.model AS actual_model, s.type AS actual_type,
+                          a.name AS area_name
+                   FROM working_conditions wc
+                   JOIN mining_areas a ON wc.area_id=a.id
+                   LEFT JOIN support_models s ON wc.support_model_id=s.id
+                   WHERE a.is_test=1
+                   ORDER BY a.name""")
+    blinds = cur.fetchall()
+    print(f"盲测案例: {len(blinds)} 条")
+    rows = []
+    for b in blinds:
+        actual = b["actual_model"]
+        if not actual:
+            rows.append(dict(area=b["area_name"], face=b["working_face_name"],
+                actual="(无架型)", rank="", hit1=0, hit3=0, near=0,
+                top1="", reason="数据缺失:案例无架型"))
             continue
-        items = res.get("items", [])
-        if not items:
-            continue
-        total += 1
-        models = [i["support_model"] for i in items]
-        if c["support_model"] in models:
-            hit3 += 1
-            if models[0] == c["support_model"]:
-                hit1 += 1
-        else:
-            misses.append((c["id"], c["support_model"], models[:3]))
-    p1 = hit1 / total * 100 if total else 0
-    p3 = hit3 / total * 100 if total else 0
-    print(f"[{mode}] 案例数={total} Top1命中={hit1}({p1:.1f}%) Top3命中={hit3}({p3:.1f}%)")
-    if misses:
-        print("  Top3 未命中示例:", misses[:5])
-    return {"mode": mode, "total": total, "top1": hit1, "top3": hit3, "p1": round(p1, 1), "p3": round(p3, 1)}
+        r = run_match(area_id=b["area_id"], top_n=5)
+        items = r["data"]["items"] if "data" in r else r["items"]
+        recs = [it.get("support_model") or it.get("model") for it in items]
+        rank = recs.index(actual) + 1 if actual in recs else 0
+        hit1, hit3 = int(rank == 1), int(1 <= rank <= 3)
+        near = 0
+        if not hit3 and rank == 0:
+            if any(family(rc) == family(actual) and rc for rc in recs):
+                near = 1
+        reason = ""
+        if not hit3:
+            cur.execute("SELECT id, type FROM support_models WHERE model=%s", (actual,))
+            m = cur.fetchone()
+            if not m:
+                reason = "数据缺失:实际架型不在库"
+            elif recs and family(recs[0])[:2] != family(actual)[:2]:
+                reason = "架型不符:Top1系列不同"
+            else:
+                reason = "权重不当:参数接近但排名靠后"
+        rows.append(dict(area=b["area_name"], face=b["working_face_name"],
+            actual=actual, rank=rank or "未中", hit1=hit1, hit3=hit3, near=near,
+            top1=recs[0] if recs else "", reason=reason))
+        print(f"{b['area_name']}: 实际{actual} -> Top1 {recs[0] if recs else '-'} "
+              f"rank={rank or '未中'} hit1={hit1} hit3={hit3} near={near}")
+
+    n = len([r for r in rows if r['actual'] != '(无架型)'])
+    h1 = sum(r["hit1"] for r in rows)
+    h3 = sum(r["hit3"] for r in rows)
+    nr = sum(r["near"] for r in rows)
+    print("=" * 50)
+    print(f"Top-1: {h1}/{n} = {h1/n*100:.1f}%")
+    print(f"Top-3: {h3}/{n} = {h3/n*100:.1f}%")
+    print(f"同族近似(未中但同族): {nr}/{n}")
+
+    os.makedirs("docs/thesis_data", exist_ok=True)
+    fp = "docs/thesis_data/backtest_data-v1.csv"
+    with open(fp, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.DictWriter(f, fieldnames=["area","face","actual","rank",
+                                          "hit1","hit3","near","top1","reason"])
+        w.writeheader()
+        w.writerows(rows)
+    print(f"已存档: {fp}")
+    conn.close()
 
 if __name__ == "__main__":
-    results = [run_backtest(m) for m in ["entropy", "ahp", "combo"]]
-    # 生成回测表文档
-    lines = ["# 回测表（留一法 LOO，三组权重对比）", "",
-             "生成时间：W24 总验收", "", "| 权重模式 | 案例数 | Top-1 命中 | Top-1 率 | Top-3 命中 | Top-3 率 |",
-             "|---|---|---|---|---|---|"]
-    for r in results:
-        lines.append(f"| {r['mode']} | {r['total']} | {r['top1']} | {r['p1']}% | {r['top3']} | {r['p3']}% |")
-    lines.append("")
-    lines.append("达标线：Top-3 ≥ 60% 或完成失败分析。")
-    with open("docs/回测表.md", "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
-    print("\n已写入 docs/回测表.md")
+    main()
