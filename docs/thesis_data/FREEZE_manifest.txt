@@ -1,10 +1,5 @@
 b220fffc99b1f9c3ada9fd2cf1f642a1aae16e4f5e1ca7f59960f1ba19a00bea  docs/thesis_data/backtest_data-v1.csv
 54eaa90b3adc4f5adcbb1697cde3f4f65025f140a26c80e1721bad2bf733a3a3  docs/thesis_data/sensitivity_data-v1.csv
-1c90848490d9c46df17202d37a7c773b488512199f277f2b93d91a83fd6f9a84  docs/thesis_data/completeness_data-v1.csv
-d49c2a5f26e846c1621e42f2379c0dd441ffe025cd4380f1c1c887807cf4acb3  /home/zhangyongbo/backup/data-v1_20260914.sql
-data-v1
-v0.3-data
-v0.3-data-final
-v0.5-agent
-v0.6-dem
-frozen_at: 2026-09-13 16:59:19, tag: data-v1, commit: 5c2e5e3
+b970e40d68aadf8871d2c288cf683fcef525f4eceab29d51884d158b372dec0e  docs/thesis_data/completeness_data-v1.csv
+a49f71e8c200e6ae79f44fd0343cc46589fd326f4a1e3af3925253ae25eec861  /home/zhangyongbo/backup/data-v1_final_20260913.sql
+frozen_at: 2026-09-13 17:06:12, tag: data-v1, commit: 8a3d9b4
