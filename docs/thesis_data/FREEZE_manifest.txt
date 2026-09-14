@@ -10,4 +10,4 @@ v2_at: 2026-09-14 12:28:03, 原因: 盲测审计(千秋退出/去重6条), commi
 af62651aa589d8d1222089a701bb4fd9d80627f063f73c6f67fbddfc0b7ed16a  docs/thesis_data/backtest_data-v3.csv
 750c63686d4126ecfe63d1f0ec857722e0b4d8219713ef1f7e324eb7c5d120a9  docs/thesis_data/completeness_data-v3.csv
 78ad93ed73ab1ffb9ab408a3fa9501bd66fa1cf0a3abd6a064c5a8a6245f4601  docs/thesis_data/sensitivity_data-v3.csv
-v3_at: 2026-09-14 13:52:42, 原因: 归一列接入+suspect口径统一后全量重跑, commit: 待填
+v3_at: 2026-09-14 13:52:42, 原因: 归一列接入+suspect口径统一后全量重跑, commit: ac5eefc
