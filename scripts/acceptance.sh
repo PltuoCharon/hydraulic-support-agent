@@ -26,7 +26,7 @@ ck "矿区列表返回真实数据"       "curl -s $BASE/api/areas/ | jqr 'asser
 ck "矿区keyword模糊查询"        "curl -sG $BASE/api/areas/ --data-urlencode 'keyword=补连塔' | jqr 'assert d[\"data\"][\"total\"]>=1'"
 ck "矿区详情404"               "test \$(curl -s -o /dev/null -w '%{http_code}' $BASE/api/areas/99999) = 404"
 ck "统一响应格式code/data/msg"  "curl -s $BASE/api/areas/ | jqr 'assert d[\"code\"]==0'"
-ck "Pydantic 422校验"          "test \$(curl -s -o /dev/null -w '%{http_code}' -X POST $BASE/api/supports/recommend -H 'Content-Type: application/json' -d '{\"seam_thickness\":99,\"gas_level\":\"低瓦斯\"}') = 422"
+ck "Pydantic 422校验"          "test \$(curl -s -o /dev/null -w '%{http_code}' -X POST $BASE/api/match/ -H 'Content-Type: application/json' -d '{\"coal_thickness\":99}') = 422"
 ck "参数读库eta"               "python -c 'from app.core.params import Params; assert 0.8 < Params().eta < 1.0'"
 
 echo "===== 2. W14 业务接口 ====="
