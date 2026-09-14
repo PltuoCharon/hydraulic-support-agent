@@ -85,3 +85,7 @@ export const streamChat = ({ message, session_id }, { onChunk, onMeta, signal })
 }
 
 export default http
+
+// W29-D5: 地图选区
+export const getMapAreas = () => http.get('/api/mining-areas/')
+export const getAreaSupports = (id) => http.get(`/api/mining-areas/${id}/supports`)
