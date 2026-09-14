@@ -43,3 +43,7 @@ data/corpus_text/
 *.pdf
 *.caj
 .coverage
+frontend/node_modules/
+frontend/dist/
+web/node_modules/
+web/dist/

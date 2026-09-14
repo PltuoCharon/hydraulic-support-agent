@@ -111,32 +111,9 @@ def recalc(req: RecalcReq):
     }}
 
 
-# ===== W25-C2 首页总览统计接口 =====
+# ===== W25-C2 首页总览统计接口(W29-D3 下沉 services/stats.py) =====
+from app.services.stats import overview as _stats_overview
+
 @app.get("/api/stats/")
 def get_stats():
-    conn = pymysql.connect(host=settings.DB_HOST, user=settings.DB_USER,
-            password=settings.DB_PASSWORD, database=settings.DB_NAME, charset="utf8mb4")
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) FROM support_models")
-            supports = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM support_models WHERE weight IS NOT NULL")
-            has_w = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM support_models WHERE intensity IS NOT NULL")
-            has_i = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM working_conditions")
-            cases = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM param_dependencies")
-            rules = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM mining_areas")
-            areas = cur.fetchone()[0]
-            cur.execute("SELECT manufacturer, COUNT(*) c FROM support_models WHERE manufacturer IS NOT NULL GROUP BY manufacturer ORDER BY c DESC LIMIT 5")
-            vendors = cur.fetchall()
-    finally:
-        conn.close()
-    return {"code": 0, "msg": "ok", "data": {
-        "supports": supports, "weight_coverage": round(has_w/supports*100, 1),
-        "intensity_coverage": round(has_i/supports*100, 1),
-        "cases": cases, "rules": rules, "areas": areas,
-        "vendors": [{"name": v[0], "count": v[1]} for v in vendors],
-    }}
+    return {"code": 0, "msg": "ok", "data": _stats_overview()}
