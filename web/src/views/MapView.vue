@@ -11,7 +11,7 @@
         <el-divider />
         <h4>在用支架（{{ supports.length }}）</h4>
         <ul class="sup-list">
-          <li v-for="s in supports" :key="s.id">{{ s.model }} · {{ s.working_resistance }} kN</li>
+          <li v-for="s in groupedSupports" :key="s.model">{{ s.model }} · {{ s.working_resistance }} kN<span v-if="s.n > 1"> ×{{ s.n }}</span></li>
           <li v-if="!supports.length" class="empty">无在用支架记录</li>
         </ul>
         <el-button type="primary" style="width:100%" @click="recommend">
@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import { getMapAreas, getAreaSupports } from '../api'
@@ -38,6 +38,15 @@ const chartRef = ref(null)
 const areas = ref([])
 const selected = ref(null)
 const supports = ref([])
+// W30-D6: 同型号去重合并计数(一个矿区多条案例共用一架型时不再重复列行)
+const groupedSupports = computed(() => {
+  const m = new Map()
+  for (const s of supports.value) {
+    if (!m.has(s.model)) m.set(s.model, { ...s, n: 0 })
+    m.get(s.model).n += 1
+  }
+  return [...m.values()]
+})
 let chart = null
 const onResize = () => chart && chart.resize()
 

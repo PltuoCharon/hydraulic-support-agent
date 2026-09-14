@@ -12,13 +12,7 @@ const items = computed(() => store.result?.items || [])
 
 // W29-D7: 可信度角标(核销W25欠账: 估算数据库/前端/论文三处可区分的"前端"环)
 // 疑=suspect(正常不会出现,匹配池已排除); 估=source含估算标注; 缺=含未查到公开参数; 实=实测/文献
-function badge(it) {
-  const s = it.support_source || ''
-  if (it.support_status === 'suspect') return { text: '疑', type: 'danger', tip: s || '存疑数据' }
-  if (s.includes('估算')) return { text: '估', type: 'warning', tip: s }
-  if (s.includes('未查到公开参数')) return { text: '缺', type: 'info', tip: s }
-  return { text: '实', type: 'success', tip: s || '实测/文献参数' }
-}
+import { badge } from '../utils/badge'
 const cond = computed(() => store.conditions)
 
 // 需求值自治：进入结果页时若还没有则自己拉（不依赖输入页改动）
