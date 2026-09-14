@@ -39,7 +39,8 @@ SELECT wc.id AS case_id, wc.working_face_name, wc.support_model_id,
        wc.roof_class AS case_roof_class, wc.gas_level_norm AS case_gas_norm,
        a.hardness_f, a.depth, a.mine_pressure, a.area_name, a.roof_class, a.gas_level_norm,
        s.model AS support_model, s.type, s.working_resistance, s.intensity, s.weight,
-       s.height_min, s.height_max, s.center_dist, s.initial_force
+       s.height_min, s.height_max, s.center_dist, s.initial_force,
+       s.source AS support_source, s.data_status AS support_status
 FROM working_conditions wc
 LEFT JOIN mining_areas a ON wc.area_id = a.id
 LEFT JOIN support_models s ON wc.support_model_id = s.id
