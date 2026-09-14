@@ -10,8 +10,8 @@ import numpy as np
 from app.db import get_conn
 from app.services.ahp import ahp_weights, JUDGE_MATRIX
 from app.services.normalize import MinMaxScaler, categorical_score
-from app.services.match_features import (ROOF_MAP, PRESSURE_MAP, GAS_MAP,
-    GAS_LEVELS, ROOF_LEVELS, PRESSURE_LEVELS, normalize_categorical)
+from app.services.match_features import (PRESSURE_MAP, GAS_LEVELS, ROOF_LEVELS,
+    PRESSURE_LEVELS, normalize_categorical, roof_class_to_level)
 from app.services.filter import effective_height
 from app.core.numparse import parse_number
 
@@ -36,7 +36,8 @@ def get_num_weights(cases):
 CASE_SQL = """
 SELECT wc.id AS case_id, wc.working_face_name, wc.support_model_id,
        wc.coal_thickness, wc.dip_angle, wc.roof_condition, wc.gas_level, wc.mining_height,
-       a.hardness_f, a.depth, a.mine_pressure, a.area_name,
+       wc.roof_class AS case_roof_class, wc.gas_level_norm AS case_gas_norm,
+       a.hardness_f, a.depth, a.mine_pressure, a.area_name, a.roof_class, a.gas_level_norm,
        s.model AS support_model, s.type, s.working_resistance, s.intensity, s.weight,
        s.height_min, s.height_max, s.center_dist, s.initial_force
 FROM working_conditions wc
@@ -115,13 +116,15 @@ def match_supports(target: dict, cases: list[dict], top_n: int = 5) -> dict:
         c_vec = np.array([v if v is not None else 0.5
                           for v in (scalers[f].transform(c.get(f)) for f in NUM_FEATS)])
         num_dist = float(np.sqrt((w * (c_vec - t_vec) ** 2).sum()))
+        # W29-D1: 顶板/瓦斯改用归一列(标准等级直接评分, NULL→中性0.5, 不猜野生文本);
+        # 矿压无归一列, 沿用 PRESSURE_MAP; GAS_MAP/ROOF_MAP 自此退出匹配链路
         cat_scores = [
-            categorical_score(normalize_categorical(c.get("roof_condition"), ROOF_MAP),
-                              normalize_categorical(target.get("roof_category"), ROOF_MAP), ROOF_LEVELS),
+            categorical_score(roof_class_to_level(c.get("case_roof_class")),
+                              roof_class_to_level(target.get("roof_class")), ROOF_LEVELS),
             categorical_score(normalize_categorical(c.get("mine_pressure"), PRESSURE_MAP),
                               normalize_categorical(target.get("mine_pressure"), PRESSURE_MAP), PRESSURE_LEVELS),
-            categorical_score(normalize_categorical(c.get("gas_level"), GAS_MAP),
-                              normalize_categorical(target.get("gas_level"), GAS_MAP), GAS_LEVELS),
+            categorical_score(c.get("case_gas_norm"),
+                              target.get("gas_level_norm"), GAS_LEVELS),
         ]
         sim = round(0.7 * (1 - min(num_dist, 1)) + 0.3 * float(np.mean(cat_scores)), 4)
         results.append({**c, "similarity": sim,

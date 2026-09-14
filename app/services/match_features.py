@@ -35,3 +35,15 @@ def normalize_categorical(raw, mapping):
     if raw is None:
         return None
     return mapping.get(str(raw).strip())
+
+
+def roof_class_to_level(raw):
+    """W29-D1: 归一列 roof_class('1类-不稳定') → ROOF_LEVELS 等级('不稳定')。
+    无前缀则要求本身就是标准等级; 否则 None(中性分0.5, 宁缺毋假不猜野生文本)"""
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if "-" in s:
+        tail = s.split("-", 1)[1]
+        return tail if tail in ROOF_LEVELS else None
+    return s if s in ROOF_LEVELS else None
