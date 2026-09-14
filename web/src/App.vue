@@ -21,6 +21,7 @@ const active = computed(() => route.path)
           <el-menu-item index="/areas">矿区选择</el-menu-item>
           <el-menu-item index="/map">地图选区</el-menu-item>
           <el-menu-item index="/spectrum">架型谱系</el-menu-item>
+          <el-menu-item index="/vendors">厂商分布</el-menu-item>
           <el-menu-item index="/result">推荐结果</el-menu-item>
           <el-menu-item index="/compare">对比分析</el-menu-item>
           <el-menu-item index="/modify">部件修改</el-menu-item>

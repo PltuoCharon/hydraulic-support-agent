@@ -92,3 +92,6 @@ export const getAreaSupports = (id) => http.get(`/api/mining-areas/${id}/support
 
 // W30-D1: 架型谱系
 export const getSpectrum = () => http.get('/api/supports/spectrum')
+
+// W30-D2: 厂商分布
+export const getVendors = () => http.get('/api/supports/vendors')

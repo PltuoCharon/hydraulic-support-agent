@@ -29,6 +29,12 @@ def spectrum():
                "items": items})
 
 
+@router.get("/vendors")
+def vendors():
+    """W30-D2 厂商分布(必须注册在 /{model_id} 之前)"""
+    return ok(queries.vendor_dist())
+
+
 @router.get("/{model_id}")
 def get_support(model_id: int):
     row = queries.get_support(model_id)

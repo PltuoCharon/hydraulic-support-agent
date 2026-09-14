@@ -6,6 +6,7 @@ const routes = [
   { path: '/areas', name: 'areas', component: () => import('../views/AreasView.vue'), meta: { title: '矿区选择' } },
   { path: '/map', name: 'map', component: () => import('../views/MapView.vue'), meta: { title: '地图选区' } },
   { path: '/spectrum', name: 'spectrum', component: () => import('../views/SpectrumView.vue'), meta: { title: '架型谱系' } },
+  { path: '/vendors', name: 'vendors', component: () => import('../views/VendorView.vue'), meta: { title: '厂商分布' } },
   { path: '/result', name: 'result', component: () => import('../views/ResultView.vue'), meta: { title: '推荐结果' } },
   { path: '/compare', name: 'compare', component: () => import('../views/CompareView.vue'), meta: { title: '支架对比' } },
   { path: '/modify', name: 'modify', component: () => import('../views/ModifyView.vue'), meta: { title: '部件修改' } },

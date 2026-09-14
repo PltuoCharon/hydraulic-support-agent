@@ -118,3 +118,21 @@ def spectrum() -> list[dict]:
         hmin, hmax = r["height_min"], r["height_max"]
         r["height_mid"] = round((float(hmin) + float(hmax)) / 2, 2) if hmin else float(hmax)
     return rows
+
+
+def vendor_dist() -> dict:
+    """W30-D2 厂商分布。verified 白名单(铁律4);
+    口径: manufacturer 为 NULL → 未知(占位第一大条, 灰色);
+    '国产' 为采集期占位值, 原样保留由前端标橙注明, 不静默归并。"""
+    rows = _fetch("""SELECT COALESCE(NULLIF(TRIM(manufacturer), ''), '未知') AS mfr,
+                            COUNT(*) AS cnt
+                     FROM support_models
+                     WHERE data_status = 'verified'
+                     GROUP BY mfr
+                     ORDER BY (mfr = '未知') DESC, cnt DESC, mfr""")
+    total = sum(r["cnt"] for r in rows)
+    unknown = next((r["cnt"] for r in rows if r["mfr"] == "未知"), 0)
+    known = total - unknown
+    return {"total": total, "known": known, "unknown": unknown,
+            "coverage": round(known / total * 100, 1) if total else 0,
+            "items": [{"manufacturer": r["mfr"], "cnt": r["cnt"]} for r in rows]}
