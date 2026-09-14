@@ -38,7 +38,7 @@ const form = reactive({
 const rules = {
   coal_thickness: [
     { required: true, message: '必填', trigger: 'blur' },
-    { type: 'number', min: 0.5, max: 25, message: '0.5~25m', trigger: 'blur' },
+    { type: 'number', min: 0.6, max: 24.9, message: '须大于 0.5 且小于 25', trigger: 'blur' },
   ],
   dip_angle: [
     { required: true, message: '必填', trigger: 'blur' },
@@ -88,7 +88,7 @@ const reset = () => formRef.value.resetFields()
       <el-row :gutter="24">
         <el-col :xs="24" :sm="12">
           <el-form-item label="煤层厚度(m)" prop="coal_thickness">
-            <el-input-number v-model="form.coal_thickness" :step="0.1" :min="0.5" :max="25" />
+            <el-input-number v-model="form.coal_thickness" :step="0.1" :min="0.6" :max="24.9" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">

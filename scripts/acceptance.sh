@@ -62,7 +62,6 @@ ck "chat流式DONE结尾"     "curl -sN -X POST $BASE/api/chat/ -H 'Content-Type
 ck "chat首轮引导追问"  "post /api/chat/ '{\"message\":\"煤层8.8米\"}' | jqr 'assert d[\"data\"][\"missing\"]'"
 ck "chat状态机推荐"    "python3 scripts/smoke_chat.py"
 
-echo "===== 验收结果: PASS=$PASS FAIL=$FAIL ====="
 
 
 echo "== W19 引导式对话状态机 =="
@@ -72,3 +71,5 @@ ck "状态机设计文档"    "test -f docs/对话状态机设计.md"
 ck "向导页文件存在"    "test -f web/src/views/WizardView.vue"
 ck "向导路由注册"      "grep -q WizardView web/src/router/index.js"
 ck "W19周报"          "test -f docs/W19周报.md"
+
+echo "===== 验收结果: PASS=$PASS FAIL=$FAIL ====="
