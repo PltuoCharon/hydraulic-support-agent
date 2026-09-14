@@ -1,6 +1,6 @@
 from app.config import settings
 from fastapi import FastAPI
-from app.routers import areas, supports, match, chat, guide
+from app.routers import areas, supports, match, chat, guide, mining_areas
 
 app = FastAPI(
     title="液压支架智能选型 API",
@@ -9,6 +9,7 @@ app = FastAPI(
 )
 
 app.include_router(areas.router,    prefix="/api/areas",    tags=["矿区"])
+app.include_router(mining_areas.router, prefix="/api/mining-areas", tags=["地图选区"])
 app.include_router(supports.router, prefix="/api/supports", tags=["支架"])
 
 @app.get("/")

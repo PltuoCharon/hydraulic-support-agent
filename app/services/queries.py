@@ -72,3 +72,22 @@ def search_rows(table: str, keyword: str = "", limit: int = 5) -> list[dict]:
         return _fetch(f"SELECT * FROM {table} WHERE {name_field} LIKE %s LIMIT %s",
                       (f"%{keyword}%", limit))
     return _fetch(f"SELECT * FROM {table} LIMIT %s", (limit,))
+
+# W29-D4: 地图选区
+def map_areas() -> list[dict]:
+    """地图散点: 非盲测 + 有坐标的矿区, 含关键工况。盲测集永不出现在前端(铁律3)"""
+    return _fetch("""SELECT id, area_name, adcode, lng, lat, coal_thickness, dip_angle,
+                            mining_height_min, mining_height_max, category
+                     FROM mining_areas
+                     WHERE is_test = 0 AND lng IS NOT NULL ORDER BY id""")
+
+def area_supports(area_id: int) -> list[dict]:
+    """矿区在用支架: 该矿区案例的实际用架(suspect 型号除外, 铁律4)"""
+    return _fetch("""SELECT s.id, s.model, s.type, s.working_resistance,
+                            s.height_min, s.height_max,
+                            wc.working_face_name, wc.source
+                     FROM working_conditions wc
+                     JOIN support_models s ON wc.support_model_id = s.id
+                     WHERE wc.area_id = %s
+                       AND (s.data_status IS NULL OR s.data_status <> 'suspect')""",
+                  (area_id,))

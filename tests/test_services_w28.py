@@ -65,3 +65,16 @@ def test_filter_endpoint_area_not_found():
     from app.main import app
     r = TestClient(app).post("/api/supports/filter", json={"area_id": 999999})
     assert r.status_code == 404
+
+def test_map_areas_coords_and_no_blind():
+    """地图接口: 全部有坐标; 盲测集(寺河/黄玉川等)不得出现(铁律3守门)"""
+    rows = queries.map_areas()
+    assert rows and all(r["lng"] is not None and r["adcode"] for r in rows)
+    names = [r["area_name"] for r in rows]
+    for blind in ["寺河", "黄玉川", "鲍店1316", "朱仙庄"]:
+        assert not any(blind in n for n in names), f"盲测矿区{blind}泄漏到地图接口!"
+
+def test_area_supports_excludes_suspect():
+    """矿区在用架: suspect型号不得返回(铁律4守门)"""
+    rows = queries.area_supports(1)   # 补连塔12514: 案例全部挂suspect ZY21000
+    assert all("ZY21000/38/82D" != r["model"] for r in rows)
