@@ -6,4 +6,4 @@ frozen_at: 2026-09-13 17:06:12, tag: data-v1, commit: 8a3d9b4
 af62651aa589d8d1222089a701bb4fd9d80627f063f73c6f67fbddfc0b7ed16a  docs/thesis_data/backtest_data-v2.csv
 750c63686d4126ecfe63d1f0ec857722e0b4d8219713ef1f7e324eb7c5d120a9  docs/thesis_data/completeness_data-v2.csv
 2feea12ca053137be05360382c1d769e8b279657a7a66a62844ca4473790851d  docs/thesis_data/sensitivity_data-v2.csv
-v2_at: 2026-09-14 12:28:03, 原因: 盲测审计(千秋退出/去重6条), commit: 待填
+v2_at: 2026-09-14 12:28:03, 原因: 盲测审计(千秋退出/去重6条), commit: 1d38b71
