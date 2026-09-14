@@ -5,7 +5,8 @@ import sys, os, csv
 sys.path.insert(0, '.')
 import pymysql
 from app.config import settings
-import app.services.matcher as matcher
+import app.services.matching as matching
+from app.services.matcher import run_match
 
 GROUPS = [
     ("G0_entropy基线", "entropy", None),
@@ -27,14 +28,14 @@ def blind_cases(cur):
 
 def run_group(cur, blinds, mode, perturb):
     os.environ["MATCH_WEIGHTS"] = mode
-    saved = dict(matcher.NUM_W)
+    saved = dict(matching.NUM_W)
     if perturb:
         for k, v in perturb.items():
-            matcher.NUM_W[k] = saved[k] * v
+            matching.NUM_W[k] = saved[k] * v
     c1 = c3 = 0
     area_hit1, area_hit3 = {}, {}
     for b in blinds:
-        r = matcher.run_match(area_id=b["area_id"], top_n=5)
+        r = run_match(area_id=b["area_id"], top_n=5)
         recs = [it.get("support_model") for it in r["items"]]
         h1 = int(recs[:1] == [b["actual"]])
         h3 = int(b["actual"] in recs[:3])
@@ -42,8 +43,8 @@ def run_group(cur, blinds, mode, perturb):
         c3 += h3
         area_hit1[b["area"]] = area_hit1.get(b["area"], 0) or h1
         area_hit3[b["area"]] = area_hit3.get(b["area"], 0) or h3
-    matcher.NUM_W.clear()
-    matcher.NUM_W.update(saved)
+    matching.NUM_W.clear()
+    matching.NUM_W.update(saved)
     os.environ["MATCH_WEIGHTS"] = "entropy"
     n = len(blinds)
     na = len(area_hit1)
