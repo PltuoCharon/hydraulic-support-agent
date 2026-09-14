@@ -20,6 +20,15 @@ def list_supports(
     rows = queries.list_supports(type, min_force, max_force, only_verified)
     return ok({"total": len(rows), "items": rows})
 
+@router.get("/spectrum")
+def spectrum():
+    """W30-D1 架型谱系(必须注册在 /{model_id} 之前, 否则被动态段吞成 422)"""
+    items = queries.spectrum()
+    return ok({"total": len(items),
+               "axis_note": "阻力/采高均来自公开型谱值; 控顶距/支护强度等字段估算情况见 est_fields",
+               "items": items})
+
+
 @router.get("/{model_id}")
 def get_support(model_id: int):
     row = queries.get_support(model_id)

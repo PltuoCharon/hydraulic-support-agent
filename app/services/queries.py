@@ -91,3 +91,30 @@ def area_supports(area_id: int) -> list[dict]:
                      WHERE wc.area_id = %s
                        AND (s.data_status IS NULL OR s.data_status <> 'suspect')""",
                   (area_id,))
+
+
+def spectrum() -> list[dict]:
+    """W30-D1 架型谱系: X=工作阻力 Y=采高(区间中值)。
+    verified 白名单(铁律4 suspect 默认排除);
+    口径: 阻力/采高均来自公开型谱值(轴相关估算为零, 2026-09-14 核实),
+    其他字段(控顶距/支护强度)的估算标注在 est_fields, 供 tooltip 展示。"""
+    rows = _fetch("""SELECT id, model, type, working_resistance, height_min, height_max,
+                            manufacturer, source
+                     FROM support_models
+                     WHERE data_status = 'verified'
+                       AND working_resistance IS NOT NULL
+                       AND height_max IS NOT NULL
+                     ORDER BY working_resistance""")
+    for r in rows:
+        src = r.get("source") or ""
+        est = []
+        if "控顶长度" in src and "估算" in src:
+            est.append("控顶长度")
+        if "复算估算" in src or "二阶估算" in src:
+            est.append("支护强度")
+        if "未查到公开参数" in src:
+            est.append("支护强度(未查到公开参数)")
+        r["est_fields"] = "、".join(dict.fromkeys(est)) if est else "无"
+        hmin, hmax = r["height_min"], r["height_max"]
+        r["height_mid"] = round((float(hmin) + float(hmax)) / 2, 2) if hmin else float(hmax)
+    return rows

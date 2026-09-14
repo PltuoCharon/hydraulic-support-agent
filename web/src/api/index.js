@@ -89,3 +89,6 @@ export default http
 // W29-D5: 地图选区
 export const getMapAreas = () => http.get('/api/mining-areas/')
 export const getAreaSupports = (id) => http.get(`/api/mining-areas/${id}/supports`)
+
+// W30-D1: 架型谱系
+export const getSpectrum = () => http.get('/api/supports/spectrum')
