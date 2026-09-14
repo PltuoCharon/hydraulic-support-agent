@@ -3,3 +3,7 @@ b220fffc99b1f9c3ada9fd2cf1f642a1aae16e4f5e1ca7f59960f1ba19a00bea  docs/thesis_da
 b970e40d68aadf8871d2c288cf683fcef525f4eceab29d51884d158b372dec0e  docs/thesis_data/completeness_data-v1.csv
 a49f71e8c200e6ae79f44fd0343cc46589fd326f4a1e3af3925253ae25eec861  /home/zhangyongbo/backup/data-v1_final_20260913.sql
 frozen_at: 2026-09-13 17:06:12, tag: data-v1, commit: 8a3d9b4
+af62651aa589d8d1222089a701bb4fd9d80627f063f73c6f67fbddfc0b7ed16a  docs/thesis_data/backtest_data-v2.csv
+750c63686d4126ecfe63d1f0ec857722e0b4d8219713ef1f7e324eb7c5d120a9  docs/thesis_data/completeness_data-v2.csv
+2feea12ca053137be05360382c1d769e8b279657a7a66a62844ca4473790851d  docs/thesis_data/sensitivity_data-v2.csv
+v2_at: 2026-09-14 12:28:03, 原因: 盲测审计(千秋退出/去重6条), commit: 待填

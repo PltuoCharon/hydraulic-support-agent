@@ -1,0 +1,8 @@
+﻿group,mode,perturb,top1_case,top3_case,top1_area,top3_area
+G0_entropy基线,entropy,-,37.5,37.5,37.5,37.5
+G1_ahp基线,ahp,-,25.0,37.5,25.0,37.5
+G2_combo基线,combo,-,25.0,37.5,25.0,37.5
+G3_采高+20%,ahp,{'_eff_h': 1.2},25.0,37.5,25.0,37.5
+G4_采高-20%,ahp,{'_eff_h': 0.8},25.0,37.5,25.0,37.5
+G5_煤厚+20%,ahp,{'coal_thickness': 1.2},25.0,37.5,25.0,37.5
+G6_煤厚-20%,ahp,{'coal_thickness': 0.8},25.0,37.5,25.0,37.5

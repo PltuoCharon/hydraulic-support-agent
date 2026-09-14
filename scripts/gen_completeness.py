@@ -1,6 +1,6 @@
 """W27-D5 论文表3: 数据完备率统计。
 用法: PYTHONPATH=. python scripts/gen_completeness.py
-输出: docs/thesis_data/completeness_data-v1.csv"""
+输出: docs/thesis_data/completeness_data-v2.csv"""
 import sys, csv, os
 sys.path.insert(0, '.')
 import pymysql
@@ -45,7 +45,7 @@ def main():
     add("估算数据三处可区分", "是", "库source标签/前端badge/论文标注")
 
     os.makedirs("docs/thesis_data", exist_ok=True)
-    fp = "docs/thesis_data/completeness_data-v1.csv"
+    fp = "docs/thesis_data/completeness_data-v2.csv"
     with open(fp, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=["item","value","note"])
         w.writeheader()

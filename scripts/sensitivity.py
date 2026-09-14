@@ -1,6 +1,6 @@
 """W27-D3 权重敏感性分析: 3模式基线 + 两特征±20%扰动, 共7组。
 用法: PYTHONPATH=. python scripts/sensitivity.py
-输出: docs/thesis_data/sensitivity_data-v1.csv"""
+输出: docs/thesis_data/sensitivity_data-v2.csv"""
 import sys, os, csv
 sys.path.insert(0, '.')
 import pymysql
@@ -67,7 +67,7 @@ def main():
             top1_area=f"{t1a:.1f}", top3_area=f"{t3a:.1f}"))
         print(f"{name:<18}{t1c:>9.1f}%{t3c:>9.1f}%{t1a:>9.1f}%{t3a:>9.1f}%")
     os.makedirs("docs/thesis_data", exist_ok=True)
-    fp = "docs/thesis_data/sensitivity_data-v1.csv"
+    fp = "docs/thesis_data/sensitivity_data-v2.csv"
     with open(fp, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=["group","mode","perturb",
             "top1_case","top3_case","top1_area","top3_area"])

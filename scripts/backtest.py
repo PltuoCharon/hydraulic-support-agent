@@ -1,6 +1,6 @@
 """W27-D2 盲测回测: 9个盲测区出题, Top-1/Top-3命中判定, 未命中归因。
 用法: PYTHONPATH=. python scripts/backtest.py
-输出: docs/thesis_data/backtest_data-v1.csv"""
+输出: docs/thesis_data/backtest_data-v2.csv"""
 import sys, csv, os
 sys.path.insert(0, '.')
 from app.config import settings
@@ -71,7 +71,7 @@ def main():
     print(f"同族近似(未中但同族): {nr}/{n}")
 
     os.makedirs("docs/thesis_data", exist_ok=True)
-    fp = "docs/thesis_data/backtest_data-v1.csv"
+    fp = "docs/thesis_data/backtest_data-v2.csv"
     with open(fp, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=["area","face","actual","rank",
                                           "hit1","hit3","near","top1","reason"])
