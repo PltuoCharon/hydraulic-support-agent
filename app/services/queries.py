@@ -54,3 +54,21 @@ def list_supports(type: str | None = None, min_force: int = 0,
 def verified_supports() -> list[dict]:
     """硬约束筛选候选池(原 supports.py:65 的 SQL 下沉)"""
     return _fetch("SELECT * FROM support_models WHERE data_status='verified'")
+
+# W28-D4: Agent 工具的白名单查询(自 tools.py 下沉)
+QUERYABLE_TABLES = {
+    "mining_areas":  {"name_field": "area_name", "desc": "矿区/工作面地质条件"},
+    "support_models": {"name_field": "model",    "desc": "液压支架型号参数"},
+    "working_conditions": {"name_field": "working_face_name", "desc": "工作面工况案例"},
+}
+
+def search_rows(table: str, keyword: str = "", limit: int = 5) -> list[dict]:
+    """白名单模糊查询。table 不在白名单抛 ValueError; limit 强制 1~10"""
+    if table not in QUERYABLE_TABLES:
+        raise ValueError(f"非法表名 {table}，仅限 {list(QUERYABLE_TABLES)}")
+    limit = max(1, min(int(limit), 10))
+    name_field = QUERYABLE_TABLES[table]["name_field"]
+    if keyword:
+        return _fetch(f"SELECT * FROM {table} WHERE {name_field} LIKE %s LIMIT %s",
+                      (f"%{keyword}%", limit))
+    return _fetch(f"SELECT * FROM {table} LIMIT %s", (limit,))

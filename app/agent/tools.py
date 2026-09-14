@@ -1,20 +1,13 @@
-"""Agent 工具集。W18。铁律：所有工具内部参数化/白名单，禁止执行 LLM 生成的裸 SQL。
-D1: query_database —— 按条件查矿区/支架。"""
+"""Agent 工具集。W28-D4: SQL 已全部下沉 services 层, 工具只做参数校验+结果格式化。
+铁律：所有工具内部参数化/白名单，禁止执行 LLM 生成的裸 SQL。"""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import json
 from langchain_core.tools import tool
-from app.db import get_conn
-from app.services.matcher import run_match
+from app.services import queries
+from app.services.matching import match_by_params
 from app.services.support_calc import recalc
 from app.services.knowledge import search
-
-# 允许查询的表与可模糊匹配的字段（白名单）
-ALLOWED = {
-    "mining_areas":  {"name_field": "area_name", "desc": "矿区/工作面地质条件"},
-    "support_models": {"name_field": "model",    "desc": "液压支架型号参数"},
-    "working_conditions": {"name_field": "working_face_name", "desc": "工作面工况案例"},
-}
 
 @tool
 def query_database(table: str, keyword: str = "", limit: int = 5) -> str:
@@ -25,31 +18,19 @@ def query_database(table: str, keyword: str = "", limit: int = 5) -> str:
         keyword: 模糊关键词（如矿区名"补连塔"、型号片段"ZY21000"），空则按 id 返回前几条
         limit: 返回条数，1~10
     Returns:
-        JSON 字符串：匹配的记录列表（不含无关于段过多时截断）。
+        JSON 字符串：匹配的记录列表。
     """
-    if table not in ALLOWED:
-        return json.dumps({"error": f"非法表名 {table}，仅限 {list(ALLOWED)}"}, ensure_ascii=False)
-    limit = max(1, min(int(limit), 10))
-    name_field = ALLOWED[table]["name_field"]
-    conn = get_conn()
     try:
-        cur = conn.cursor()
-        if keyword:
-            cur.execute(
-                f"SELECT * FROM {table} WHERE {name_field} LIKE %s LIMIT %s",
-                (f"%{keyword}%", limit))
-        else:
-            cur.execute(f"SELECT * FROM {table} LIMIT %s", (limit,))
-        rows = cur.fetchall()
-        # Decimal/datetime 转字符串，保证可 JSON 序列化
-        for r in rows:
-            for k, v in r.items():
-                if not isinstance(v, (int, float, str, type(None))):
-                    r[k] = str(v)
-        return json.dumps({"table": table, "count": len(rows), "rows": rows},
-                          ensure_ascii=False, default=str)
-    finally:
-        conn.close()
+        rows = queries.search_rows(table, keyword, limit)
+    except ValueError as e:
+        return json.dumps({"error": str(e)}, ensure_ascii=False)
+    # Decimal/datetime 转字符串，保证可 JSON 序列化
+    for r in rows:
+        for k, v in r.items():
+            if not isinstance(v, (int, float, str, type(None))):
+                r[k] = str(v)
+    return json.dumps({"table": table, "count": len(rows), "rows": rows},
+                      ensure_ascii=False, default=str)
 
 @tool
 def run_matching(coal_thickness: float, dip_angle: float = 0.0, top_n: int = 3) -> str:
@@ -57,7 +38,7 @@ def run_matching(coal_thickness: float, dip_angle: float = 0.0, top_n: int = 3) 
     当用户给出煤层厚度等地质条件、要求推荐支架型号时，必须调用本工具获取
     真实匹配结果，禁止凭记忆推荐型号。
     Args:
-        coal_thickness: 煤层厚度（米），必须 >0.5 且 <12
+        coal_thickness: 煤层厚度（米），必须 >0.5 且 <25
         dip_angle: 煤层倾角（度），0~45，未知填 0
         top_n: 返回案例数，1~5
     Returns:
@@ -67,8 +48,7 @@ def run_matching(coal_thickness: float, dip_angle: float = 0.0, top_n: int = 3) 
         return f"参数错误：煤层厚度 {coal_thickness} 超出有效范围 (0.5, 25)"
     top_n = max(1, min(int(top_n), 5))
     try:
-        data = run_match(coal_thickness=coal_thickness,
-                         dip_angle=dip_angle or 0, top_n=top_n)
+        data = match_by_params(coal_thickness, dip_angle, top_n)
     except Exception as e:
         return f"匹配引擎错误：{type(e).__name__}: {e}"
     if not data["items"]:
@@ -119,8 +99,6 @@ def search_knowledge(query: str, top_k: int = 3) -> str:
 TOOLS = [query_database, run_matching, recalc_params, search_knowledge]
 
 if __name__ == "__main__":
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     print(query_database.invoke({"table": "support_models", "keyword": "ZY21000"}))
     print(query_database.invoke({"table": "mining_areas", "keyword": "补连塔", "limit": 2}))
     print(query_database.invoke({"table": "users"}))   # 白名单拒绝测试
@@ -129,8 +107,6 @@ if __name__ == "__main__":
     print(run_matching.invoke({"coal_thickness": 99}))   # 越界测试
     print("--- 工具3测试 ---")
     print(recalc_params.invoke({"bore_mm": 320}))
-    print(recalc_params.invoke({"bore_mm": 360}))
     print(recalc_params.invoke({"bore_mm": 999}))   # 越界测试
     print("--- 工具4测试 ---")
     print(search_knowledge.invoke({"query": "支护强度确定"})[:300])
-    print(search_knowledge.invoke({"query": "火星殖民政策"}))   # 无关查询
