@@ -1,6 +1,24 @@
 <template>
   <div class="map-page">
-    <div ref="chartRef" class="map-chart"></div>
+    <div class="map-body">
+      <div ref="chartRef" class="map-chart"></div>
+      <aside v-if="selected" class="info-card">
+        <h3>{{ selected.area_name }}</h3>
+        <p><span>类别</span>{{ selected.category || '—' }}</p>
+        <p><span>煤厚</span>{{ selected.coal_thickness ?? '—' }} m</p>
+        <p><span>倾角</span>{{ selected.dip_angle ?? '—' }} °</p>
+        <p><span>采高</span>{{ selected.mining_height_min ?? '—' }} ~ {{ selected.mining_height_max ?? '—' }} m</p>
+        <el-divider />
+        <h4>在用支架（{{ supports.length }}）</h4>
+        <ul class="sup-list">
+          <li v-for="s in supports" :key="s.id">{{ s.model }} · {{ s.working_resistance }} kN</li>
+          <li v-if="!supports.length" class="empty">无在用支架记录</li>
+        </ul>
+        <el-button type="primary" style="width:100%" @click="recommend">
+          以该矿区工况发起推荐
+        </el-button>
+      </aside>
+    </div>
     <footer class="coord-note">
       坐标为地级市近似位置 · 地图边界数据已本地化（/geo/china.json），离线可用 · 共 {{ areas.length }} 个矿区
     </footer>
@@ -9,17 +27,31 @@
 
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
-import { getMapAreas } from '../api'
+import { getMapAreas, getAreaSupports } from '../api'
+import { useMatchStore } from '../store/match'
 
-const emit = defineEmits(['select'])   // 点击矿区→父组件信息卡(D6)
+const router = useRouter()
+const store = useMatchStore()
 const chartRef = ref(null)
 const areas = ref([])
+const selected = ref(null)
+const supports = ref([])
 let chart = null
 const onResize = () => chart && chart.resize()
 
+async function onSelect(a) {
+  selected.value = a
+  supports.value = (await getAreaSupports(a.id)).items
+}
+
+function recommend() {
+  store.prefillFromArea(selected.value)   // 复用 W25 矿区路径既有链路
+  router.push('/input')
+}
+
 onMounted(async () => {
-  // GeoJSON 本地加载: 断网可渲染(W29验收项)
   const geo = await fetch('/geo/china.json').then(r => r.json())
   echarts.registerMap('china', geo)
   areas.value = (await getMapAreas()).items
@@ -52,7 +84,7 @@ onMounted(async () => {
       zlevel: 2,
     }],
   })
-  chart.on('click', (p) => { if (p.data && p.data.area) emit('select', p.data.area) })
+  chart.on('click', (p) => { if (p.data && p.data.area) onSelect(p.data.area) })
   window.addEventListener('resize', onResize)
 })
 
@@ -64,6 +96,14 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .map-page { display: flex; flex-direction: column; height: 100%; }
+.map-body { flex: 1; display: flex; min-height: 0; }
 .map-chart { flex: 1; min-height: 560px; }
+.info-card { width: 320px; flex-shrink: 0; padding: 16px; border-left: 1px solid #ebeef5; overflow-y: auto; }
+.info-card h3 { margin: 0 0 12px; }
+.info-card p { margin: 6px 0; font-size: 14px; }
+.info-card p span { display: inline-block; width: 48px; color: #909399; }
+.info-card h4 { margin: 0 0 8px; font-size: 14px; }
+.sup-list { margin: 0 0 16px; padding-left: 18px; font-size: 13px; }
+.sup-list .empty { color: #909399; list-style: none; margin-left: -18px; }
 .coord-note { padding: 8px 16px; color: #909399; font-size: 12px; border-top: 1px solid #ebeef5; }
 </style>
