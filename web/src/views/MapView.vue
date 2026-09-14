@@ -48,7 +48,7 @@ async function onSelect(a) {
 
 function recommend() {
   store.prefillFromArea(selected.value)   // 复用 W25 矿区路径既有链路
-  router.push('/input')
+  router.push('/select')
 }
 
 onMounted(async () => {

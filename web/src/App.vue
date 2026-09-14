@@ -17,12 +17,11 @@ const active = computed(() => route.path)
           </div>
         </div>
         <el-menu :default-active="active" mode="horizontal" router class="topmenu">
-          <el-menu-item index="/input">工况输入</el-menu-item>
+          <el-menu-item index="/select">选型中心</el-menu-item>
           <el-menu-item index="/areas">矿区选择</el-menu-item>
           <el-menu-item index="/map">地图选区</el-menu-item>
           <el-menu-item index="/spectrum">架型谱系</el-menu-item>
           <el-menu-item index="/vendors">厂商分布</el-menu-item>
-          <el-menu-item index="/wizard">选型向导</el-menu-item>
           <el-menu-item index="/result">推荐结果</el-menu-item>
           <el-menu-item index="/compare">对比分析</el-menu-item>
           <el-menu-item index="/modify">部件修改</el-menu-item>

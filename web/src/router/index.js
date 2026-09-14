@@ -1,7 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
-  { path: '/', redirect: '/input' },
+  { path: '/', redirect: '/select' },
+  { path: '/select', name: 'select', component: () => import('../views/SelectCenterView.vue'), meta: { title: '选型中心' } },
   { path: '/input', name: 'input', component: () => import('../views/InputView.vue'), meta: { title: '工况输入' } },
   { path: '/areas', name: 'areas', component: () => import('../views/AreasView.vue'), meta: { title: '矿区选择' } },
   { path: '/map', name: 'map', component: () => import('../views/MapView.vue'), meta: { title: '地图选区' } },
