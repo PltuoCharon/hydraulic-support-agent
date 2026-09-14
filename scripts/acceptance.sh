@@ -31,7 +31,7 @@ ck "参数读库eta"               "python -c 'from app.core.params import Param
 
 echo "===== 2. W14 业务接口 ====="
 ck "支架筛选(掩护式含变体)"     "curl -sG $BASE/api/supports/ --data-urlencode 'type=掩护式' | jqr 'assert d[\"data\"][\"total\"]>0'"
-ck "厂商接口total守恒"          "curl -s $BASE/api/supports/vendors | jqr 'd=json.load(sys.stdin)[\"data\"]; assert d[\"known\"]+d[\"unknown\"]==d[\"total\"]'"
+ck "厂商接口total守恒"          "python3 scripts/check_vendors.py"
 ck "谱系接口suspect排除"        "! curl -s $BASE/api/supports/spectrum | grep -q ZY18900"
 ck "suspect被默认排除"          "! curl -s $BASE/api/supports/ | grep -q ZY18900"
 ck "/filter真实筛选"           "post /api/supports/filter '{\"area_id\":1}' | jqr 'assert \"required_intensity\" in d[\"data\"]'"
