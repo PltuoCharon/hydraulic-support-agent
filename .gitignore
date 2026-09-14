@@ -42,3 +42,4 @@ data/corpus/
 data/corpus_text/
 *.pdf
 *.caj
+.coverage
