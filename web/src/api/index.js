@@ -95,3 +95,6 @@ export const getSpectrum = () => http.get('/api/supports/spectrum')
 
 // W30-D2: 厂商分布
 export const getVendors = () => http.get('/api/supports/vendors')
+
+// W30-D5: 首页总览统计
+export const getStats = () => http.get('/api/stats/')
