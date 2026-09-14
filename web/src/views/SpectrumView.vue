@@ -35,8 +35,8 @@ onMounted(async () => {
   }))
   chart = echarts.init(chartRef.value)
   chart.setOption({
-    grid: { left: 70, right: 30, top: 50, bottom: 60 },
-    legend: { top: 5 },
+    grid: { left: 70, right: 30, top: 80, bottom: 60 },
+    legend: { top: 5, type: 'scroll' },
     tooltip: {
       trigger: 'item',
       formatter: p => {
