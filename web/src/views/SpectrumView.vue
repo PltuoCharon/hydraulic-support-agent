@@ -3,7 +3,7 @@
     <h2>架型谱系图</h2>
     <p class="note">
       X=工作阻力(kN)，Y=采高(m，区间中值)，点色=架型。
-      本库 157 个 verified 型号的阻力/采高均来自公开型谱值，无轴相关估算点；
+      本库 {{ total }} 个 verified 型号的阻力/采高均来自公开型谱值，无轴相关估算点；
       控顶距、支护强度等字段的估算情况见各点 tooltip。
     </p>
     <div ref="chartRef" class="chart"></div>
