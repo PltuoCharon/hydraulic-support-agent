@@ -12,3 +12,10 @@ af62651aa589d8d1222089a701bb4fd9d80627f063f73c6f67fbddfc0b7ed16a  docs/thesis_da
 78ad93ed73ab1ffb9ab408a3fa9501bd66fa1cf0a3abd6a064c5a8a6245f4601  docs/thesis_data/sensitivity_data-v3.csv
 v3_at: 2026-09-14 13:52:42, 原因: 归一列接入+suspect口径统一后全量重跑, commit: ac5eefc
 stage_b_close: 2026-09-14, 范围: W28–W30, 冻结核验: v1/v2/v3 CSV+SQL转储 10项哈希全命中, commit: 56e4be4
+data_v4: 2026-09-15, 范围: W31-D3案例41->50三步入库(矿区31->40,架型159->168,案例41->50)
+  mining_areas_v4.csv sha256=bc5821d73fdefe6c4d71ae606feed6a8a524574b2b1635dd0c6ba4e8d40d1e69
+  support_models_v4.csv sha256=afd9da47f7e5f689f5aad212667a8008df129fab28c32f4cd6d2f5853aa4cf6f
+  working_conditions_v4.csv sha256=3545a7e38c53f83dd60669c3eb21817a389c49badab9e0c477fa8e839177a978
+  hydraulic_support_v4_20260915.sql sha256=1907ef4a67d302cc68676f1ca69eb2a8f47d37a3cde67cd1b24925242c940b94 (406746字节)
+  入库前备份: pre_data_v4_20260915.sql (399840字节), 入库脚本: scripts/import_w31_d3_cases.py
+  依据: docs/案例采集_W31-D3.md (9条原文PDF逐字段核验), 入库commit: 09c5d05
