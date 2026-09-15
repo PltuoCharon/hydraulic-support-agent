@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useMatchStore } from '../store/match'
 import { useChart } from '../composables/useChart'
 import { BRAND_COLORS } from '../utils/echarts'
+import { badge } from '../utils/badge'
 
 const router = useRouter()
 const store = useMatchStore()
@@ -81,6 +82,14 @@ onMounted(render)
       <div ref="chartEl" style="width: 100%; height: 480px" />
     </el-card>
 
+    <div class="badge-row" style="margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap">
+      <span v-for="it in selected" :key="it.support_model" style="display: inline-flex; align-items: center">
+        {{ it.support_model }}
+        <el-tooltip :content="badge(it).tip" placement="top">
+          <el-tag :type="badge(it).type" size="small" effect="plain" style="margin-left: 6px">{{ badge(it).text }}</el-tag>
+        </el-tooltip>
+      </span>
+    </div>
     <p style="color:#909399; margin-top: 8px">
       说明：各维度以所选支架中最大值为 1 归一化，仅用于形态对比；缺数据的维度按 0 计并在上方提示。
     </p>
