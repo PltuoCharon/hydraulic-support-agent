@@ -47,5 +47,4 @@ onMounted(async () => { st.value = await getStats() })
 /* W30-D6: 页签内隐藏子视图自带H2, 避免与页签名重复 */
 .select-center :deep(.el-tab-pane h2) { display: none; }
 /* W30-D6: 页签内隐藏子视图自带H2, 避免与页签名重复 */
-.select-center :deep(.el-tab-pane h2) { display: none; }
 </style>
