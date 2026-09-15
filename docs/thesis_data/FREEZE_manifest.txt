@@ -19,3 +19,10 @@ data_v4: 2026-09-15, 范围: W31-D3案例41->50三步入库(矿区31->40,架型1
   hydraulic_support_v4_20260915.sql sha256=1907ef4a67d302cc68676f1ca69eb2a8f47d37a3cde67cd1b24925242c940b94 (406746字节)
   入库前备份: pre_data_v4_20260915.sql (399840字节), 入库脚本: scripts/import_w31_d3_cases.py
   依据: docs/案例采集_W31-D3.md (9条原文PDF逐字段核验), 入库commit: 09c5d05
+data_v5: 2026-09-15, 范围: W31-D6磁窑沟adcode回填(140930河曲县,依据:山西河曲晋神磁窑沟煤业有限公司采矿权评估报告(神华官网)+忻州市区划代码表,非猜测),仅mining_areas变更1行
+  mining_areas_v5.csv sha256=989a4122c361896aa3b7df8f6be0190b7c5160bcd236325f932344fefa13037e
+  support_models_v5.csv sha256=afd9da47f7e5f689f5aad212667a8008df129fab28c32f4cd6d2f5853aa4cf6f (与v4一致)
+  working_conditions_v5.csv sha256=3545a7e38c53f83dd60669c3eb21817a389c49badab9e0c477fa8e839177a978 (与v4一致)
+  hydraulic_support_v5_20260915.sql sha256=2b07eeeeccf54f70757727345d42de2d51ec1f00b87aaa6ac8abc8d4c8f1de82 (409904字节)
+  变更隔离性验证: backtest_data-v5与v4逐字一致(Top1=25.0%,Top3=37.5%),sensitivity_data-v5七组全平同v4,adcode不在匹配链路
+  触发缘由: pytest守门test_map_areas_coords_and_no_blind(lng非空且adcode真值),回填后69 passed
