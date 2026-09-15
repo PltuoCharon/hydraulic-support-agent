@@ -25,7 +25,6 @@ const active = computed(() => route.path)
           <el-menu-item index="/result">推荐结果</el-menu-item>
           <el-menu-item index="/compare">对比分析</el-menu-item>
           <el-menu-item index="/modify">部件修改</el-menu-item>
-          <el-menu-item index="/chat">智能体对话</el-menu-item>
         </el-menu>
       </div>
     </header>
