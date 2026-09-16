@@ -42,9 +42,8 @@ const res = ref(null)
 
 const run = async () => {
   try {
-    const r = await postQNeed({ ...form })
-    if (r.code === 0) { res.value = r.data } else { ElMessage.error(r.msg) }
-  } catch (e) { ElMessage.error('请求失败：' + (e.message || e)) }
+    res.value = await postQNeed({ ...form })
+  } catch (e) { /* 拦截器已统一提示 */ }
 }
 const fillXieqiao = () => { Object.assign(form, { hm: 6.0, l1: 25, lp: 15, bc: 5, n: 1.33 }); run() }
 </script>
