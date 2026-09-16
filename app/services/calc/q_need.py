@@ -34,15 +34,15 @@ def p2_weighting_step(l1: float, k: float = 2.0) -> float:
 
 def p3_statistical(hm: float, lp: float, bc: float, n: float) -> float:
     """统计公式法 p3=72.3hm+4.5Lp+78.9Bc−10.24N−62.1 (kPa), 返回 MPa。
-    lp 周期来压步距 m; bc 控顶高度 m; n 直接顶厚度与采高之比。"""
+    lp 基本顶周期来压步距 m; bc 控顶宽度 m; n 直接顶充填系数（直接顶厚度/采高）。"""
     if not (0.5 <= hm <= 10):
         raise ValueError(f"采高 {hm}m 超出常见范围 0.5~10m")
     if not (3 <= lp <= 60):
         raise ValueError(f"周期来压步距 {lp}m 超出常见范围 3~60m")
     if not (1 <= bc <= 15):
-        raise ValueError(f"控顶高度 {bc}m 超出常见范围 1~15m")
+        raise ValueError(f"控顶宽度 {bc}m 超出常见范围 1~15m")
     if not (0.2 <= n <= 5):
-        raise ValueError(f"直接顶/采高比 {n} 超出常见范围 0.2~5")
+        raise ValueError(f"直接顶充填系数 {n} 超出常见范围 0.2~5")
     kpa = 72.3 * hm + 4.5 * lp + 78.9 * bc - 10.24 * n - 62.1
     return round(kpa / 1000.0, 3)
 

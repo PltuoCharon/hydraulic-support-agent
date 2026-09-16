@@ -3,11 +3,11 @@
     <el-container style="height: calc(100vh - 60px)">
       <el-aside width="220px">
         <el-menu :default-active="mod" @select="onSelect">
-          <el-menu-item index="qneed">需求阻力估算</el-menu-item>
+          <el-menu-item index="qneed">支护需求计算</el-menu-item>
           <el-menu-item index="column">立柱设计与校核</el-menu-item>
-          <el-menu-item index="jack" disabled>千斤顶校核（W34 待建）</el-menu-item>
-          <el-menu-item index="valve" disabled>阀组选型（W35 待建）</el-menu-item>
-          <el-menu-item index="pump" disabled>泵站匹配（W35 待建）</el-menu-item>
+          <el-menu-item index="jack" disabled>千斤顶设计（计划中）</el-menu-item>
+          <el-menu-item index="valve" disabled>阀组设计（计划中）</el-menu-item>
+          <el-menu-item index="pump" disabled>泵站匹配（计划中）</el-menu-item>
         </el-menu>
         <el-alert type="info" :closable="false" style="margin:12px">
           边界声明：本模块为参数化设计计算与校核，不生成结构设计图样。

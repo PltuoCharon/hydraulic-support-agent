@@ -5,10 +5,10 @@
     </el-alert>
     <el-form label-width="180px" style="max-width:560px">
       <el-form-item label="采高 hm (m)"><el-input-number v-model="form.hm" :min="0.5" :max="10" :step="0.1" /></el-form-item>
-      <el-form-item label="周期来压步距 L1 (m)"><el-input-number v-model="form.l1" :min="1" :max="60" :step="1" /></el-form-item>
-      <el-form-item label="控顶距 Lp (m)"><el-input-number v-model="form.lp" :min="1" :max="20" :step="0.1" /></el-form-item>
-      <el-form-item label="支架中心距 Bc (m)"><el-input-number v-model="form.bc" :min="0.5" :max="6" :step="0.05" /></el-form-item>
-      <el-form-item label="动载系数 N"><el-input-number v-model="form.n" :min="1" :max="3" :step="0.01" /></el-form-item>
+      <el-form-item label="老顶初次来压步距 L1 (m)"><el-input-number v-model="form.l1" :min="5" :max="100" :step="1" /></el-form-item>
+      <el-form-item label="基本顶周期来压步距 Lp (m)"><el-input-number v-model="form.lp" :min="3" :max="60" :step="0.1" /></el-form-item>
+      <el-form-item label="控顶宽度 Bc (m)"><el-input-number v-model="form.bc" :min="1" :max="15" :step="0.05" /></el-form-item>
+      <el-form-item label="直接顶充填系数 N"><el-input-number v-model="form.n" :min="0.2" :max="5" :step="0.01" /></el-form-item>
       <el-form-item>
         <el-button type="primary" @click="run">计算</el-button>
         <el-button @click="fillXieqiao">填入谢桥实例</el-button>
@@ -17,7 +17,7 @@
     <template v-if="res">
       <el-descriptions :column="3" border style="max-width:760px">
         <el-descriptions-item label="p1 岩重法">{{ res.p1_mpa }} MPa</el-descriptions-item>
-        <el-descriptions-item label="p2 来压步距法">{{ res.p2_mpa }} MPa</el-descriptions-item>
+        <el-descriptions-item label="p2 老顶来压步距法">{{ res.p2_mpa }} MPa</el-descriptions-item>
         <el-descriptions-item label="p3 统计公式">{{ res.p3_mpa }} MPa</el-descriptions-item>
       </el-descriptions>
       <div class="verdict">
