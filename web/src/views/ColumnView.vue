@@ -1,0 +1,803 @@
+<template>
+  <div class="column-view">
+
+    <div class="page-head">
+      <div>
+        <h2>立柱设计与强度校核</h2>
+        <p>
+          根据支架工作阻力反算立柱缸径，并对缸筒壁厚、
+          材料应力及压杆稳定性进行参数化校核。
+        </p>
+      </div>
+    </div>
+
+    <el-alert
+      title="计算边界"
+      type="info"
+      :closable="false"
+      show-icon
+      class="boundary-alert"
+    >
+      <template #default>
+        本模块用于公式复现、参数设计辅助和方案比较。
+        材料性能、安全系数、载荷与边界条件应结合实际设计资料复核；
+        当前结果不直接作为产品制造依据。
+      </template>
+    </el-alert>
+
+    <el-tabs v-model="tab" class="main-tabs">
+
+      <!-- ==================================================
+           A. 缸径设计
+           ================================================== -->
+      <el-tab-pane label="缸径设计" name="design">
+
+        <el-row :gutter="18">
+
+          <el-col :xs="24" :lg="10">
+            <el-card shadow="never">
+              <template #header>
+                <b>设计输入</b>
+              </template>
+
+              <el-form
+                :model="designForm"
+                label-width="150px"
+              >
+
+                <el-form-item label="设计工作阻力">
+                  <el-input-number
+                    v-model="designForm.p_kn"
+                    :min="100"
+                    :max="50000"
+                    :step="100"
+                    controls-position="right"
+                  />
+                  <span class="unit">kN</span>
+                </el-form-item>
+
+                <el-form-item label="承载立柱根数">
+                  <el-input-number
+                    v-model="designForm.n"
+                    :min="1"
+                    :max="8"
+                    :step="1"
+                    :precision="0"
+                    controls-position="right"
+                  />
+                  <span class="unit">根</span>
+                </el-form-item>
+
+                <el-form-item label="工作压力">
+                  <el-input-number
+                    v-model="designForm.p_mpa"
+                    :min="5"
+                    :max="50"
+                    :step="0.5"
+                    controls-position="right"
+                  />
+                  <span class="unit">MPa</span>
+                </el-form-item>
+
+                <el-form-item label="效率 η">
+                  <el-input-number
+                    v-model="designForm.eta"
+                    :min="0.8"
+                    :max="1.0"
+                    :step="0.01"
+                    :precision="2"
+                    controls-position="right"
+                  />
+                </el-form-item>
+
+                <el-divider content-position="left">
+                  初撑力校核（可选）
+                </el-divider>
+
+                <el-form-item label="启用初撑力校核">
+                  <el-switch v-model="enableSetting" />
+                </el-form-item>
+
+                <el-form-item
+                  v-if="enableSetting"
+                  label="初撑力"
+                >
+                  <el-input-number
+                    v-model="designForm.p_set_kn"
+                    :min="0"
+                    :max="50000"
+                    :step="100"
+                    controls-position="right"
+                  />
+                  <span class="unit">kN</span>
+                </el-form-item>
+
+                <el-form-item>
+                  <el-button
+                    type="primary"
+                    :loading="designLoading"
+                    @click="runDesign"
+                  >
+                    开始计算
+                  </el-button>
+
+                  <el-button @click="fillDesignExample">
+                    填入D3基准
+                  </el-button>
+
+                  <el-button @click="clearDesign">
+                    清空结果
+                  </el-button>
+                </el-form-item>
+
+              </el-form>
+            </el-card>
+          </el-col>
+
+          <el-col :xs="24" :lg="14">
+
+            <el-card
+              v-if="designRes"
+              shadow="never"
+            >
+              <template #header>
+                <b>计算结果</b>
+              </template>
+
+              <el-descriptions
+                :column="2"
+                border
+              >
+                <el-descriptions-item label="理论缸径">
+                  <b>{{ designRes.d_calc_mm }}</b> mm
+                </el-descriptions-item>
+
+                <el-descriptions-item label="标准缸径">
+                  <b>{{ designRes.d_std_mm }}</b> mm
+                </el-descriptions-item>
+
+                <el-descriptions-item label="圆整后实际承载力">
+                  <b>{{ designRes.p_actual_kn }}</b> kN
+                </el-descriptions-item>
+
+                <el-descriptions-item label="圆整方向">
+                  <el-tag type="success">
+                    向上圆整
+                  </el-tag>
+                </el-descriptions-item>
+
+                <template v-if="designRes.setting_ratio_pct !== undefined">
+                  <el-descriptions-item label="初撑力比">
+                    <b>{{ designRes.setting_ratio_pct }}</b> %
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="初撑力比校核">
+                    <el-tag
+                      :type="designRes.setting_ok ? 'success' : 'warning'"
+                    >
+                      {{ designRes.setting_ok ? '通过' : '超出建议区间' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                </template>
+              </el-descriptions>
+
+              <el-divider content-position="left">
+                计算依据
+              </el-divider>
+
+              <el-descriptions
+                :column="1"
+                border
+              >
+                <el-descriptions-item label="缸径关系">
+                  P = n × (π/4) × D² × p × η
+                </el-descriptions-item>
+
+                <el-descriptions-item label="标准化">
+                  理论缸径向上圆整到程序内标准缸径系列
+                </el-descriptions-item>
+
+                <el-descriptions-item
+                  v-if="designRes.rule"
+                  label="初撑力比"
+                >
+                  {{ designRes.rule }}
+                </el-descriptions-item>
+
+                <el-descriptions-item label="来源">
+                  {{ designRes.source }}
+                </el-descriptions-item>
+              </el-descriptions>
+            </el-card>
+
+            <el-empty
+              v-else
+              description="填写参数后进行缸径设计"
+            />
+
+          </el-col>
+
+        </el-row>
+      </el-tab-pane>
+
+
+      <!-- ==================================================
+           B. 强度校核
+           ================================================== -->
+      <el-tab-pane label="强度校核" name="strength">
+
+        <el-row :gutter="18">
+
+          <el-col :xs="24" :lg="10">
+
+            <el-card shadow="never">
+              <template #header>
+                <b>强度校核输入</b>
+              </template>
+
+              <el-form
+                :model="strengthForm"
+                label-width="155px"
+              >
+
+                <el-form-item label="材料">
+                  <el-select
+                    v-model="strengthForm.material"
+                    style="width: 260px"
+                  >
+                    <el-option
+                      label="27SiMn（σs=835 MPa，已核实）"
+                      value="27SiMn"
+                    />
+                  </el-select>
+                </el-form-item>
+
+                <div class="material-note">
+                  当前仅开放已核实材料。27SiMn 的 σb 暂无可靠核实值，
+                  程序保持为空，不进行推测。
+                </div>
+
+                <el-form-item label="缸筒内径">
+                  <el-input-number
+                    v-model="strengthForm.d_mm"
+                    :min="40"
+                    :max="600"
+                    :step="10"
+                    controls-position="right"
+                  />
+                  <span class="unit">mm</span>
+                </el-form-item>
+
+                <el-form-item label="计算压力">
+                  <el-input-number
+                    v-model="strengthForm.p_mpa"
+                    :min="1"
+                    :max="400"
+                    :step="0.5"
+                    controls-position="right"
+                  />
+                  <span class="unit">MPa</span>
+                </el-form-item>
+
+                <el-form-item label="材料安全系数">
+                  <el-input-number
+                    v-model="strengthForm.material_safety_factor"
+                    :min="1"
+                    :max="5"
+                    :step="0.1"
+                    :precision="1"
+                    controls-position="right"
+                  />
+                </el-form-item>
+
+                <el-divider content-position="left">
+                  应力校核（可选）
+                </el-divider>
+
+                <el-form-item label="启用应力校核">
+                  <el-switch v-model="enableStress" />
+                </el-form-item>
+
+                <el-form-item
+                  v-if="enableStress"
+                  label="最大计算应力"
+                >
+                  <el-input-number
+                    v-model="strengthForm.sigma_max_mpa"
+                    :min="0"
+                    :step="10"
+                    controls-position="right"
+                  />
+                  <span class="unit">MPa</span>
+                </el-form-item>
+
+                <el-divider content-position="left">
+                  压杆稳定（可选）
+                </el-divider>
+
+                <el-form-item label="启用稳定性校核">
+                  <el-switch v-model="enableBuckling" />
+                </el-form-item>
+
+                <template v-if="enableBuckling">
+
+                  <el-form-item label="弹性模量 E">
+                    <el-input-number
+                      v-model="strengthForm.e_mpa"
+                      :min="1"
+                      :step="1000"
+                      controls-position="right"
+                    />
+                    <span class="unit">MPa</span>
+                  </el-form-item>
+
+                  <el-form-item label="截面惯性矩 I">
+                    <el-input-number
+                      v-model="strengthForm.i_mm4"
+                      :min="1"
+                      :step="1000000"
+                      controls-position="right"
+                    />
+                    <span class="unit">mm⁴</span>
+                  </el-form-item>
+
+                  <el-form-item label="计算长度 L">
+                    <el-input-number
+                      v-model="strengthForm.l_mm"
+                      :min="1"
+                      :step="100"
+                      controls-position="right"
+                    />
+                    <span class="unit">mm</span>
+                  </el-form-item>
+
+                  <el-form-item label="轴向载荷">
+                    <el-input-number
+                      v-model="strengthForm.load_kn"
+                      :min="1"
+                      :step="100"
+                      controls-position="right"
+                    />
+                    <span class="unit">kN</span>
+                  </el-form-item>
+
+                  <el-form-item label="长度系数 μ">
+                    <el-input-number
+                      v-model="strengthForm.mu"
+                      :min="0.1"
+                      :step="0.1"
+                      :precision="1"
+                      controls-position="right"
+                    />
+                  </el-form-item>
+
+                </template>
+
+                <el-form-item>
+                  <el-button
+                    type="primary"
+                    :loading="strengthLoading"
+                    @click="runStrength"
+                  >
+                    开始校核
+                  </el-button>
+
+                  <el-button @click="fillStrengthExample">
+                    填入D4复核示例
+                  </el-button>
+
+                  <el-button @click="clearStrength">
+                    清空结果
+                  </el-button>
+                </el-form-item>
+
+              </el-form>
+            </el-card>
+
+          </el-col>
+
+
+          <el-col :xs="24" :lg="14">
+
+            <el-card
+              v-if="strengthRes"
+              shadow="never"
+            >
+              <template #header>
+                <b>校核结果</b>
+              </template>
+
+              <el-descriptions
+                :column="2"
+                border
+              >
+                <el-descriptions-item label="材料">
+                  {{ strengthRes.material.name }}
+                </el-descriptions-item>
+
+                <el-descriptions-item label="屈服强度 σs">
+                  {{ strengthRes.material.sigma_s_mpa }} MPa
+                </el-descriptions-item>
+
+                <el-descriptions-item label="抗拉强度 σb">
+                  <el-tag
+                    v-if="strengthRes.material.sigma_b_mpa === null"
+                    type="info"
+                  >
+                    未核实，不使用
+                  </el-tag>
+                  <span v-else>
+                    {{ strengthRes.material.sigma_b_mpa }} MPa
+                  </span>
+                </el-descriptions-item>
+
+                <el-descriptions-item label="许用应力">
+                  {{ strengthRes.material.sigma_allow_mpa }} MPa
+                </el-descriptions-item>
+
+                <el-descriptions-item label="理论壁厚">
+                  <b>{{ strengthRes.wall.thickness_mm }}</b> mm
+                </el-descriptions-item>
+
+                <el-descriptions-item label="壁厚公式档">
+                  <el-tag>
+                    {{ regimeLabel(strengthRes.wall.regime) }}
+                  </el-tag>
+                </el-descriptions-item>
+              </el-descriptions>
+
+              <el-divider content-position="left">
+                应力校核
+              </el-divider>
+
+              <template v-if="strengthRes.stress">
+                <el-descriptions
+                  :column="2"
+                  border
+                >
+                  <el-descriptions-item label="最大计算应力">
+                    {{ strengthRes.stress.sigma_max_mpa }} MPa
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="安全系数">
+                    {{ strengthRes.stress.safety_factor }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="判定">
+                    <el-tag
+                      :type="strengthRes.stress.ok ? 'success' : 'danger'"
+                    >
+                      {{ strengthRes.stress.ok ? '通过' : '不通过' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </template>
+
+              <el-alert
+                v-else
+                type="info"
+                :closable="false"
+                title="本次未启用材料应力校核"
+              />
+
+              <el-divider content-position="left">
+                压杆稳定
+              </el-divider>
+
+              <template v-if="strengthRes.buckling">
+                <el-descriptions
+                  :column="2"
+                  border
+                >
+                  <el-descriptions-item label="欧拉临界载荷">
+                    {{ strengthRes.buckling.critical_load_kn }} kN
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="稳定安全系数">
+                    {{ strengthRes.buckling.safety_factor }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="判定">
+                    <el-tag
+                      :type="strengthRes.buckling.ok ? 'success' : 'danger'"
+                    >
+                      {{ strengthRes.buckling.ok ? '通过' : '不通过' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </template>
+
+              <el-alert
+                v-else
+                type="info"
+                :closable="false"
+                title="本次未启用压杆稳定性校核"
+              />
+
+              <el-divider content-position="left">
+                来源与边界
+              </el-divider>
+
+              <el-descriptions
+                :column="1"
+                border
+              >
+                <el-descriptions-item label="材料数据来源">
+                  {{ strengthRes.material.source }}
+                </el-descriptions-item>
+
+                <el-descriptions-item label="壁厚公式来源">
+                  {{ strengthRes.wall.source }}
+                </el-descriptions-item>
+
+                <el-descriptions-item label="边界说明">
+                  {{ strengthRes.boundary_note }}
+                </el-descriptions-item>
+              </el-descriptions>
+
+              <el-alert
+                type="warning"
+                :closable="false"
+                show-icon
+                class="example-warning"
+              >
+                <template #default>
+                  D4复核数据中，43.4 MPa 和 656.7/835 MPa
+                  来自已核实文献；欧拉稳定性所用 E、I、L、载荷
+                  为公式验证构造参数，不代表与前述数据属于同一实际矿井工况。
+                </template>
+              </el-alert>
+
+            </el-card>
+
+            <el-empty
+              v-else
+              description="填写参数后进行强度校核"
+            />
+
+          </el-col>
+
+        </el-row>
+
+      </el-tab-pane>
+
+    </el-tabs>
+
+  </div>
+</template>
+
+
+<script setup>
+import { reactive, ref } from 'vue'
+import {
+  postColumnDesign,
+  postColumnStrength,
+} from '../api'
+
+
+const tab = ref('design')
+
+
+// ============================================================
+// 缸径设计
+// ============================================================
+
+const enableSetting = ref(true)
+const designLoading = ref(false)
+const designRes = ref(null)
+
+const designForm = reactive({
+  p_kn: 2533,
+  n: 1,
+  p_mpa: 31.5,
+  eta: 1.0,
+  p_set_kn: 1900,
+})
+
+
+const fillDesignExample = () => {
+  designForm.p_kn = 2533
+  designForm.n = 1
+  designForm.p_mpa = 31.5
+  designForm.eta = 1.0
+  designForm.p_set_kn = 1900
+  enableSetting.value = true
+  designRes.value = null
+}
+
+
+const clearDesign = () => {
+  designRes.value = null
+}
+
+
+const runDesign = async () => {
+  designLoading.value = true
+
+  try {
+    const payload = {
+      p_kn: designForm.p_kn,
+      n: designForm.n,
+      p_mpa: designForm.p_mpa,
+      eta: designForm.eta,
+    }
+
+    if (enableSetting.value) {
+      payload.p_set_kn = designForm.p_set_kn
+    }
+
+    // 项目Axios拦截器成功时已经返回 body.data，
+    // 因此这里直接接计算结果，不再读取 r.code / r.data。
+    designRes.value = await postColumnDesign(payload)
+
+  } catch (e) {
+    // 全局Axios拦截器统一处理错误提示。
+  } finally {
+    designLoading.value = false
+  }
+}
+
+
+// ============================================================
+// 强度校核
+// ============================================================
+
+const enableStress = ref(true)
+const enableBuckling = ref(true)
+
+const strengthLoading = ref(false)
+const strengthRes = ref(null)
+
+const strengthForm = reactive({
+  material: '27SiMn',
+
+  d_mm: 200,
+  p_mpa: 43.4,
+  material_safety_factor: 2.0,
+
+  sigma_max_mpa: 656.7,
+
+  e_mpa: 206000,
+  i_mm4: 10000000,
+  l_mm: 2000,
+  load_kn: 2000,
+  mu: 1.0,
+})
+
+
+const fillStrengthExample = () => {
+  strengthForm.material = '27SiMn'
+
+  strengthForm.d_mm = 200
+  strengthForm.p_mpa = 43.4
+  strengthForm.material_safety_factor = 2.0
+
+  strengthForm.sigma_max_mpa = 656.7
+
+  strengthForm.e_mpa = 206000
+  strengthForm.i_mm4 = 10000000
+  strengthForm.l_mm = 2000
+  strengthForm.load_kn = 2000
+  strengthForm.mu = 1.0
+
+  enableStress.value = true
+  enableBuckling.value = true
+
+  strengthRes.value = null
+}
+
+
+const clearStrength = () => {
+  strengthRes.value = null
+}
+
+
+const runStrength = async () => {
+  strengthLoading.value = true
+
+  try {
+    const payload = {
+      d_mm: strengthForm.d_mm,
+      p_mpa: strengthForm.p_mpa,
+      material: strengthForm.material,
+      material_safety_factor:
+        strengthForm.material_safety_factor,
+    }
+
+    if (enableStress.value) {
+      payload.sigma_max_mpa =
+        strengthForm.sigma_max_mpa
+    }
+
+    if (enableBuckling.value) {
+      payload.e_mpa = strengthForm.e_mpa
+      payload.i_mm4 = strengthForm.i_mm4
+      payload.l_mm = strengthForm.l_mm
+      payload.load_kn = strengthForm.load_kn
+      payload.mu = strengthForm.mu
+    }
+
+    strengthRes.value =
+      await postColumnStrength(payload)
+
+  } catch (e) {
+    // 全局Axios拦截器统一处理错误提示。
+  } finally {
+    strengthLoading.value = false
+  }
+}
+
+
+const regimeLabel = (regime) => {
+  const map = {
+    thin: '薄壁公式',
+    mid: '中壁公式',
+    thick: '厚壁/拉美公式',
+  }
+
+  return map[regime] || regime
+}
+</script>
+
+
+<style scoped>
+.column-view {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+}
+
+.page-head {
+  margin-bottom: 16px;
+}
+
+.page-head h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.page-head p {
+  margin: 0;
+  color: #606266;
+  line-height: 1.7;
+}
+
+.boundary-alert {
+  margin-bottom: 18px;
+}
+
+.main-tabs {
+  margin-top: 4px;
+}
+
+.unit {
+  margin-left: 8px;
+  color: #606266;
+}
+
+.material-note {
+  margin: -6px 0 18px 155px;
+  max-width: 520px;
+  color: #909399;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.example-warning {
+  margin-top: 18px;
+}
+
+:deep(.el-input-number) {
+  width: 220px;
+}
+
+:deep(.el-descriptions) {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1200px) {
+  .material-note {
+    margin-left: 0;
+  }
+}
+</style>

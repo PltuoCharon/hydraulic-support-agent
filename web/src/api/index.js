@@ -101,3 +101,11 @@ export const getStats = () => http.get('/api/stats/')
 
 // W33-D2: 设计计算
 export const postQNeed = (data) => http.post('/api/calc/q-need', data)
+
+
+// W33-D5: 立柱设计与强度校核
+export const postColumnDesign = (data) =>
+  http.post('/api/calc/column-design', data)
+
+export const postColumnStrength = (data) =>
+  http.post('/api/calc/column-strength', data)

@@ -4,7 +4,7 @@
       <el-aside width="220px">
         <el-menu :default-active="mod" @select="onSelect">
           <el-menu-item index="qneed">需求阻力估算</el-menu-item>
-          <el-menu-item index="column" disabled>立柱缸径反算（W33-D3 待建）</el-menu-item>
+          <el-menu-item index="column">立柱设计与校核</el-menu-item>
           <el-menu-item index="jack" disabled>千斤顶校核（W34 待建）</el-menu-item>
           <el-menu-item index="valve" disabled>阀组选型（W35 待建）</el-menu-item>
           <el-menu-item index="pump" disabled>泵站匹配（W35 待建）</el-menu-item>
@@ -15,6 +15,7 @@
       </el-aside>
       <el-main>
         <QNeedView v-if="mod === 'qneed'" />
+        <ColumnView v-else-if="mod === 'column'" />
         <el-empty v-else description="该子模块尚未建设" />
       </el-main>
     </el-container>
@@ -25,6 +26,7 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QNeedView from './QNeedView.vue'
+import ColumnView from './ColumnView.vue'
 
 const route = useRoute()
 const router = useRouter()
