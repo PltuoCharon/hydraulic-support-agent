@@ -12,6 +12,7 @@ const routes = [
   { path: '/result', name: 'result', component: () => import('../views/ResultView.vue'), meta: { title: '推荐结果' } },
   { path: '/compare', name: 'compare', component: () => import('../views/CompareView.vue'), meta: { title: '支架对比' } },
   { path: '/modify', name: 'modify', component: () => import('../views/ModifyView.vue'), meta: { title: '部件修改' } },
+  { path: '/calc', name: 'calc', component: () => import('../views/CalcCenterView.vue'), meta: { title: '设计计算' } },
   { path: '/chat', redirect: '/select?tab=chat' },
 ]
 

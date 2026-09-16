@@ -98,3 +98,6 @@ export const getVendors = () => http.get('/api/supports/vendors')
 
 // W30-D5: 首页总览统计
 export const getStats = () => http.get('/api/stats/')
+
+// W33-D2: 设计计算
+export const postQNeed = (data) => http.post('/api/calc/q-need', data)
