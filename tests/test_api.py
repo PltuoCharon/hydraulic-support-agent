@@ -274,3 +274,18 @@ def test_recommend_engine_error():
         out = gg.recommend({"params": {"coal_thickness": 8.8}})
     assert out["stage"] == "recommend_failed"
     assert "不可用" in out["messages"][0][1]
+
+
+def test_calc_qneed_xieqiao():
+    """W33-D2 契约守护: 谢桥实例复现文献输出"""
+    r = client.post("/api/calc/q-need", json={"hm": 6.0, "l1": 25, "lp": 15, "bc": 5, "n": 1.33})
+    d = r.json()["data"]
+    assert d["p1_mpa"] == 0.9 and d["p2_mpa"] == 0.7 and d["p3_mpa"] == 0.82
+    assert d["q_need_mpa"] == 0.9 and d["governing"] == "p1"
+    assert d["source"]
+
+
+def test_calc_qneed_invalid():
+    """W33-D2 契约守护: 越界输入返回 code=1"""
+    r = client.post("/api/calc/q-need", json={"hm": 20.0, "l1": 25, "lp": 15, "bc": 5, "n": 1.33})
+    assert r.json()["code"] == 1
