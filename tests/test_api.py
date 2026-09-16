@@ -289,3 +289,155 @@ def test_calc_qneed_invalid():
     """W33-D2 契约守护: 越界输入返回 code=1"""
     r = client.post("/api/calc/q-need", json={"hm": 20.0, "l1": 25, "lp": 15, "bc": 5, "n": 1.33})
     assert r.json()["code"] == 1
+
+
+
+# ============================================================
+# W33-D5：立柱设计计算 API 守门测试
+# ============================================================
+
+def _w33d5_client():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    return TestClient(app)
+
+
+def test_calc_column_design_benchmark():
+    """D3基准：2533kN / 1柱 / 31.5MPa / eta=1 → D≈320mm。"""
+    client = _w33d5_client()
+
+    r = client.post(
+        "/api/calc/column-design",
+        json={
+            "p_kn": 2533,
+            "n": 1,
+            "p_mpa": 31.5,
+            "eta": 1.0,
+            "p_set_kn": 1900,
+        },
+    )
+
+    assert r.status_code == 200
+
+    body = r.json()
+    assert body["code"] == 0
+
+    d = body["data"]
+
+    assert abs(d["d_calc_mm"] - 320.0) <= 0.1
+    assert d["d_std_mm"] == 320
+    assert abs(d["p_actual_kn"] - 2533.4) <= 0.5
+
+    assert abs(d["setting_ratio_pct"] - 75.0) <= 0.2
+    assert d["setting_ok"] is True
+    assert d["source"]
+
+
+def test_calc_column_design_invalid():
+    """工作阻力越界必须由内核拒绝，API转换为code=1。"""
+    client = _w33d5_client()
+
+    r = client.post(
+        "/api/calc/column-design",
+        json={
+            "p_kn": 10,
+            "n": 1,
+            "p_mpa": 31.5,
+            "eta": 1.0,
+        },
+    )
+
+    assert r.status_code == 200
+
+    body = r.json()
+    assert body["code"] == 1
+    assert "工作阻力" in body["msg"]
+
+
+def test_calc_column_strength_benchmark():
+    """D4复核：
+    壁厚：D=200,p=43.4,[sigma]=835/2=417.5 → 10.40mm thin
+    应力：656.7/835 → 安全系数1.27
+    欧拉构造例：Pcr≈5082.8kN，稳定安全系数≈2.54
+    """
+    client = _w33d5_client()
+
+    r = client.post(
+        "/api/calc/column-strength",
+        json={
+            "d_mm": 200,
+            "p_mpa": 43.4,
+            "material": "27SiMn",
+            "material_safety_factor": 2.0,
+            "sigma_max_mpa": 656.7,
+            "e_mpa": 206000,
+            "i_mm4": 10000000,
+            "l_mm": 2000,
+            "load_kn": 2000,
+            "mu": 1.0,
+        },
+    )
+
+    assert r.status_code == 200
+
+    body = r.json()
+    assert body["code"] == 0
+
+    d = body["data"]
+
+    assert d["material"]["name"] == "27SiMn"
+    assert d["material"]["sigma_s_mpa"] == 835.0
+    assert d["material"]["sigma_b_mpa"] is None
+    assert d["material"]["sigma_allow_mpa"] == 417.5
+
+    assert abs(d["wall"]["thickness_mm"] - 10.40) <= 0.01
+    assert d["wall"]["regime"] == "thin"
+
+    assert d["stress"]["safety_factor"] == 1.27
+    assert d["stress"]["ok"] is True
+
+    assert abs(d["buckling"]["critical_load_kn"] - 5082.8) <= 0.1
+    assert d["buckling"]["safety_factor"] == 2.54
+    assert d["buckling"]["ok"] is True
+
+    assert d["material"]["source"]
+    assert d["wall"]["source"]
+
+
+def test_calc_column_strength_invalid():
+    """越界和稳定参数残缺均必须拒绝。"""
+    client = _w33d5_client()
+
+    # 缸径越界
+    r1 = client.post(
+        "/api/calc/column-strength",
+        json={
+            "d_mm": 20,
+            "p_mpa": 43.4,
+            "material": "27SiMn",
+            "material_safety_factor": 2.0,
+        },
+    )
+
+    assert r1.status_code == 200
+    body1 = r1.json()
+    assert body1["code"] == 1
+    assert "缸径" in body1["msg"]
+
+    # 稳定性参数只填一部分
+    r2 = client.post(
+        "/api/calc/column-strength",
+        json={
+            "d_mm": 200,
+            "p_mpa": 43.4,
+            "material": "27SiMn",
+            "material_safety_factor": 2.0,
+            "e_mpa": 206000,
+            "i_mm4": 10000000
+        },
+    )
+
+    assert r2.status_code == 200
+    body2 = r2.json()
+    assert body2["code"] == 1
+    assert "四项缺一不可" in body2["msg"]

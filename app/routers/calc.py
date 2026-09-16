@@ -1,11 +1,36 @@
-"""设计计算路由 —— W33-D2
-契约: docs/接口契约_W28.md 附录C。SQL 零, 纯计算内核调用。"""
+"""设计计算路由 —— W33
+
+契约：
+- docs/接口契约_W28.md 附录C：支护需求估算
+- docs/接口契约_W28.md 附录D：立柱设计与强度校核
+
+原则：
+路由层只做参数接收、流程编排和统一响应；
+所有物理公式均调用 app/services/calc 下的纯计算内核。
+"""
+
+from typing import Optional
+
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
+
 from app.services.calc.q_need import estimate
+from app.services.calc.column import design as column_design_core
+from app.services.calc.column_strength import (
+    MATERIALS,
+    SOURCE_WALL,
+    allowable_stress,
+    wall_thickness,
+    check_stress,
+    euler_buckling,
+)
 
 router = APIRouter()
 
+
+# ============================================================
+# W33-D2：支护需求
+# ============================================================
 
 class QNeedReq(BaseModel):
     hm: float = Field(..., description="采高 m")
@@ -21,8 +46,220 @@ class QNeedReq(BaseModel):
 @router.post("/q-need")
 def q_need(req: QNeedReq):
     try:
-        data = estimate(req.hm, req.l1, req.lp, req.bc, req.n,
-                        req.gamma, req.k1, req.k)
+        data = estimate(
+            req.hm,
+            req.l1,
+            req.lp,
+            req.bc,
+            req.n,
+            req.gamma,
+            req.k1,
+            req.k,
+        )
         return {"code": 0, "data": data}
+    except ValueError as e:
+        return {"code": 1, "msg": str(e)}
+
+
+# ============================================================
+# W33-D5：立柱缸径设计
+# ============================================================
+
+class ColumnDesignReq(BaseModel):
+    p_kn: float = Field(..., description="支架设计工作阻力 kN")
+    n: int = Field(..., description="承载立柱根数")
+    p_mpa: float = Field(..., description="设计工作压力 MPa")
+    eta: float = Field(0.9, description="效率")
+    p_set_kn: Optional[float] = Field(
+        None,
+        description="初撑力 kN；为空则不做初撑力比校核",
+    )
+
+
+@router.post("/column-design")
+def column_design(req: ColumnDesignReq):
+    try:
+        # 这里只做请求级输入完整性检查，不重复任何物理公式。
+        if req.p_set_kn is not None and not 0 <= req.p_set_kn <= 50000:
+            raise ValueError(
+                f"初撑力 {req.p_set_kn}kN 超出接口允许范围 0~50000kN"
+            )
+
+        data = column_design_core(
+            p_kn=req.p_kn,
+            n=req.n,
+            p_mpa=req.p_mpa,
+            eta=req.eta,
+            p_set_kn=req.p_set_kn,
+        )
+
+        return {"code": 0, "data": data}
+
+    except ValueError as e:
+        return {"code": 1, "msg": str(e)}
+
+
+# ============================================================
+# W33-D5：立柱强度校核
+# ============================================================
+
+class ColumnStrengthReq(BaseModel):
+    d_mm: float = Field(..., description="缸筒内径 mm")
+    p_mpa: float = Field(..., description="计算压力 MPa")
+
+    material: str = Field(
+        "27SiMn",
+        description="缸筒材料；当前开放已核实材料27SiMn",
+    )
+    material_safety_factor: float = Field(
+        2.0,
+        description="计算许用应力采用的安全系数",
+    )
+
+    sigma_max_mpa: Optional[float] = Field(
+        None,
+        description="最大计算应力 MPa；为空则不执行应力校核",
+    )
+
+    e_mpa: Optional[float] = Field(
+        None,
+        description="弹性模量 MPa",
+    )
+    i_mm4: Optional[float] = Field(
+        None,
+        description="截面惯性矩 mm^4",
+    )
+    l_mm: Optional[float] = Field(
+        None,
+        description="计算长度 mm",
+    )
+    load_kn: Optional[float] = Field(
+        None,
+        description="轴向工作载荷 kN",
+    )
+    mu: float = Field(
+        1.0,
+        description="欧拉稳定长度系数",
+    )
+
+
+@router.post("/column-strength")
+def column_strength(req: ColumnStrengthReq):
+    try:
+        # ----------------------------------------------------
+        # 1. 材料
+        # ----------------------------------------------------
+        if req.material not in MATERIALS:
+            raise ValueError(
+                f"材料 {req.material} 暂无已核实参数，当前可用："
+                + "、".join(MATERIALS.keys())
+            )
+
+        mat = MATERIALS[req.material]
+
+        sigma_s = mat.get("sigma_s")
+        if sigma_s is None:
+            raise ValueError(
+                f"{req.material} 屈服强度未核实，不能执行强度计算"
+            )
+
+        sigma_allow = allowable_stress(
+            sigma_s,
+            req.material_safety_factor,
+        )
+
+        # ----------------------------------------------------
+        # 2. 缸筒壁厚
+        # ----------------------------------------------------
+        delta_mm, regime = wall_thickness(
+            req.d_mm,
+            req.p_mpa,
+            sigma_allow,
+        )
+
+        # ----------------------------------------------------
+        # 3. 可选：应力校核
+        # ----------------------------------------------------
+        stress_result = None
+
+        if req.sigma_max_mpa is not None:
+            stress_sf, stress_ok = check_stress(
+                req.sigma_max_mpa,
+                sigma_s,
+            )
+
+            stress_result = {
+                "sigma_max_mpa": req.sigma_max_mpa,
+                "safety_factor": stress_sf,
+                "ok": stress_ok,
+            }
+
+        # ----------------------------------------------------
+        # 4. 可选：欧拉稳定校核
+        # ----------------------------------------------------
+        buckling_values = [
+            req.e_mpa,
+            req.i_mm4,
+            req.l_mm,
+            req.load_kn,
+        ]
+
+        any_buckling = any(v is not None for v in buckling_values)
+        all_buckling = all(v is not None for v in buckling_values)
+
+        if any_buckling and not all_buckling:
+            raise ValueError(
+                "稳定性校核参数必须完整提供："
+                "e_mpa、i_mm4、l_mm、load_kn 四项缺一不可"
+            )
+
+        if req.mu <= 0:
+            raise ValueError("长度系数 mu 必须大于0")
+
+        buckling_result = None
+
+        if all_buckling:
+            pcr_kn, buckling_sf, buckling_ok = euler_buckling(
+                req.e_mpa,
+                req.i_mm4,
+                req.l_mm,
+                req.load_kn,
+                req.mu,
+            )
+
+            buckling_result = {
+                "critical_load_kn": pcr_kn,
+                "safety_factor": buckling_sf,
+                "ok": buckling_ok,
+            }
+
+        # ----------------------------------------------------
+        # 5. 返回
+        # ----------------------------------------------------
+        data = {
+            "material": {
+                "name": req.material,
+                "sigma_s_mpa": sigma_s,
+                "sigma_b_mpa": mat.get("sigma_b"),
+                "sigma_allow_mpa": sigma_allow,
+                "material_safety_factor": req.material_safety_factor,
+                "source": mat.get("source"),
+            },
+            "wall": {
+                "thickness_mm": delta_mm,
+                "regime": regime,
+                "source": SOURCE_WALL,
+            },
+            "stress": stress_result,
+            "buckling": buckling_result,
+            "boundary_note": (
+                "本结果用于公式复现、方案比较与参数设计辅助；"
+                "材料性能、安全系数和边界条件应按实际设计资料复核，"
+                "不直接作为产品制造依据。"
+            ),
+        }
+
+        return {"code": 0, "data": data}
+
     except ValueError as e:
         return {"code": 1, "msg": str(e)}
