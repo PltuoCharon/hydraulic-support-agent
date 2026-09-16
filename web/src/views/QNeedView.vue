@@ -6,8 +6,8 @@
     <el-form label-width="180px" style="max-width:560px">
       <el-form-item label="采高 hm (m)"><el-input-number v-model="form.hm" :min="0.5" :max="10" :step="0.1" /></el-form-item>
       <el-form-item label="周期来压步距 L1 (m)"><el-input-number v-model="form.l1" :min="1" :max="60" :step="1" /></el-form-item>
-      <el-form-item label="控顶距 Lp (m)"><el-input-number v-model="form.lp" :min="1" :max="10" :step="0.1" /></el-form-item>
-      <el-form-item label="支架中心距 Bc (m)"><el-input-number v-model="form.bc" :min="0.5" :max="3" :step="0.05" /></el-form-item>
+      <el-form-item label="控顶距 Lp (m)"><el-input-number v-model="form.lp" :min="1" :max="20" :step="0.1" /></el-form-item>
+      <el-form-item label="支架中心距 Bc (m)"><el-input-number v-model="form.bc" :min="0.5" :max="6" :step="0.05" /></el-form-item>
       <el-form-item label="动载系数 N"><el-input-number v-model="form.n" :min="1" :max="3" :step="0.01" /></el-form-item>
       <el-form-item>
         <el-button type="primary" @click="run">计算</el-button>
