@@ -1,0 +1,13 @@
+current_route,current_view,current_role,target_module,target_submodule,target_route,action,priority
+/,SelectCenterView,选型中心入口,智能选型,工况输入,/selection/input,migrate,P1
+/input,InputView,工况输入,智能选型,工况输入,/selection/input,merge,P1
+/wizard,WizardView,分步选型,智能选型,分步选型,/selection/wizard,merge,P1
+/chat,ChatView,对话选型,智能选型,对话选型,/selection/chat,retain_then_agentdock,P2
+/result,ResultView,推荐结果,智能选型,推荐结果,/selection/result,migrate,P1
+/compare,CompareView,支架对比,智能选型,支架对比,/selection/compare,migrate,P1
+/areas,AreasView,矿区列表,支架数据库,矿区工况,/database/areas,migrate,P1
+/map,MapView,矿区地图,支架数据库,矿区地图,/database/map,migrate,P1
+/spectrum,SpectrumView,架型谱系,支架数据库,架型谱系,/database/spectrum,migrate,P1
+/vendors,VendorView,厂商统计,支架数据库,制造商,/database/vendors,migrate,P1
+/calc,CalcCenterView,设计计算中心,设计计算,计算中心,/design,migrate,P1
+/modify,ModifyView,历史部件修改,设计计算,历史部件修改,/design/legacy-modify,deprecate_after_migration,P0
