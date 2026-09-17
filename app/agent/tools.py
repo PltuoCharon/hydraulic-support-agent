@@ -67,9 +67,9 @@ def run_matching(coal_thickness: float, dip_angle: float = 0.0, top_n: int = 3) 
 def recalc_params(bore_mm: float, pressure_mpa: float = 31.5, n_cylinders: int = 2,
                   center_dist: float = 1.75, canopy_len: float = 4.0) -> str:
     """支架部件参数修改重算：给定立柱缸径(mm)、泵站压力(MPa)、立柱数、中心距(m)、
-    控顶距(m)，按力学公式重算单柱推力、工作阻力、支护强度。
+    支护长度参数(m)，按历史公式链重算单柱推力、工作阻力、支护强度。
     用于"缸径320换成360会怎样""泵站压力提高后阻力多大"类问题。
-    结果为公式法估算值，非厂家实测。
+    结果为历史公式链估算值，非厂家实测；canopy_len工程定义及eta物理口径仍在W34审计中。
     """
     try:
         r = recalc(bore_mm, pressure_mpa, n_cylinders, center_dist, canopy_len)

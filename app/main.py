@@ -57,7 +57,7 @@ def _load_params():
     return Params()
 
 def _req_values(thickness):
-    """工况需求支护强度与工作阻力（选型论文口径）"""
+    """历史工况需求计算（legacy_review）。与W33 q_need不是同一模型，保留用于兼容旧ModifyView。"""
     par = _load_params()
     q = par["k1"] * thickness * par["rock_gamma"] / 1000.0          # MPa
     f = q * (par["beam_length"] + par["roof_end_distance"]) \
@@ -69,7 +69,7 @@ def get_requirement(coal_thickness: float):
     return {"code": 0, "data": _req_values(coal_thickness), "msg": "ok"}
 
 
-# ===== W23-D6 部件重算：改缸径/立柱数/泵压 → 链式重算参数 =====
+# ===== W23-D6 历史部件重算（legacy_review）：保留兼容，不作为W33+统一设计主链 =====
 import math
 from pydantic import BaseModel
 
