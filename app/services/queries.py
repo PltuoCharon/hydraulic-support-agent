@@ -79,7 +79,10 @@ def map_areas() -> list[dict]:
     return _fetch("""SELECT id, area_name, adcode, lng, lat, coal_thickness, dip_angle,
                             mining_height_min, mining_height_max, category
                      FROM mining_areas
-                     WHERE is_test = 0 AND lng IS NOT NULL ORDER BY id""")
+                     WHERE is_test = 0
+                       AND lng IS NOT NULL
+                       AND lat IS NOT NULL
+                     ORDER BY id""")
 
 def area_supports(area_id: int) -> list[dict]:
     """矿区在用支架: 该矿区案例的实际用架(suspect 型号除外, 铁律4)"""
