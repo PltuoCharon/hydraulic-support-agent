@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 VUE = Path("web/src/views/QNeedView.vue").read_text(encoding="utf-8")
+VUE_COMPACT = " ".join(VUE.split())
 
 
 def test_qneed_ui_physical_labels():
@@ -23,7 +24,7 @@ def test_qneed_ui_physical_labels():
 
 
 def test_qneed_ui_range_covers_backend_domain():
-    assert 'v-model="form.l1" :min="5" :max="100"' in VUE
-    assert 'v-model="form.lp" :min="3" :max="60"' in VUE
-    assert 'v-model="form.bc" :min="1" :max="15"' in VUE
-    assert 'v-model="form.n" :min="0.2" :max="5"' in VUE
+    assert 'v-model="form.l1" :min="5" :max="100"' in VUE_COMPACT
+    assert 'v-model="form.lp" :min="3" :max="60"' in VUE_COMPACT
+    assert 'v-model="form.bc" :min="1" :max="15"' in VUE_COMPACT
+    assert 'v-model="form.n" :min="0.2" :max="5"' in VUE_COMPACT

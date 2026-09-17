@@ -25,6 +25,15 @@
       </template>
     </el-alert>
 
+    <FormulaCard
+      formula-id="F-COL-001~003"
+      title="立柱承载与缸径设计关系"
+      formula="P = n × (π/4) × D² × p × η"
+      description="由设计工作阻力、承载立柱根数、工作压力和效率反算理论缸径，并向上圆整到程序维护的标准缸径系列。"
+      source="当前立柱设计计算服务；计算结果中继续保留具体来源说明。"
+      class="column-formula"
+    />
+
     <el-tabs v-model="tab" class="main-tabs">
 
       <!-- ==================================================
@@ -122,7 +131,7 @@
                   </el-button>
 
                   <el-button @click="fillDesignExample">
-                    填入D3基准
+                    填入计算示例
                   </el-button>
 
                   <el-button @click="clearDesign">
@@ -210,9 +219,10 @@
               </el-descriptions>
             </el-card>
 
-            <el-empty
+            <EmptyState
               v-else
-              description="填写参数后进行缸径设计"
+              title="等待缸径计算"
+              description="输入工作阻力、承载立柱根数、工作压力和效率后执行计算。结果区将给出理论缸径、标准缸径及实际承载力。"
             />
 
           </el-col>
@@ -225,6 +235,14 @@
            B. 强度校核
            ================================================== -->
       <el-tab-pane label="强度校核" name="strength">
+
+        <el-alert
+          type="warning"
+          :closable="false"
+          show-icon
+          title="当前许用应力采用 σs / n 作为计算脚手架，该口径仍需结合材料与液压缸设计标准复核；不得直接作为制造级壁厚设计依据。"
+          class="strength-basis-warning"
+        />
 
         <el-row :gutter="18">
 
@@ -383,7 +401,7 @@
                   </el-button>
 
                   <el-button @click="fillStrengthExample">
-                    填入D4复核示例
+                    填入校核示例
                   </el-button>
 
                   <el-button @click="clearStrength">
@@ -542,7 +560,7 @@
                 class="example-warning"
               >
                 <template #default>
-                  D4复核数据中，43.4 MPa 和 656.7/835 MPa
+                  当前复核示例中，43.4 MPa 和 656.7/835 MPa
                   来自已核实文献；欧拉稳定性所用 E、I、L、载荷
                   为公式验证构造参数，不代表与前述数据属于同一实际矿井工况。
                 </template>
@@ -550,9 +568,10 @@
 
             </el-card>
 
-            <el-empty
+            <EmptyState
               v-else
-              description="填写参数后进行强度校核"
+              title="等待强度校核"
+              description="输入材料、缸径与计算压力后执行校核。可选启用材料应力与欧拉稳定性检查。"
             />
 
           </el-col>
@@ -573,6 +592,9 @@ import {
   postColumnDesign,
   postColumnStrength,
 } from '../api'
+
+import FormulaCard from '../components/ui/FormulaCard.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
 
 
 const tab = ref('design')
@@ -766,8 +788,16 @@ const regimeLabel = (regime) => {
   margin-bottom: 18px;
 }
 
+.column-formula {
+  margin-bottom: 18px;
+}
+
 .main-tabs {
   margin-top: 4px;
+}
+
+.strength-basis-warning {
+  margin-bottom: 16px;
 }
 
 .unit {
