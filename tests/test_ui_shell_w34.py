@@ -50,3 +50,11 @@ def test_design_system_components_exist():
 
     for filename in required:
         assert (base / filename).exists()
+
+
+def test_vite_scaffold_css_is_not_loaded():
+    main = read("web/src/main.js")
+
+    assert "import './style.css'" not in main
+
+    assert not Path("web/src/style.css").exists()
