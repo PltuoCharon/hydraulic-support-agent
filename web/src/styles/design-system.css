@@ -1,0 +1,163 @@
+:root {
+  /* ===== Industrial Engineering Intelligence ===== */
+
+  --hs-navy-950: #0b2238;
+  --hs-navy-900: #123b61;
+  --hs-navy-800: #174c78;
+  --hs-blue-600: #2f80ed;
+  --hs-blue-500: #409eff;
+
+  --hs-orange-500: #f3a93b;
+
+  --hs-green-600: #2f9e66;
+  --hs-yellow-600: #d99516;
+  --hs-red-600: #d84a4a;
+
+  --hs-gray-950: #1f2937;
+  --hs-gray-800: #334155;
+  --hs-gray-700: #475569;
+  --hs-gray-600: #64748b;
+  --hs-gray-500: #94a3b8;
+  --hs-gray-300: #d8dee8;
+  --hs-gray-200: #e4e7ed;
+  --hs-gray-100: #eef2f6;
+  --hs-gray-050: #f5f7fa;
+
+  --hs-white: #ffffff;
+
+  --hs-sidebar-width: 236px;
+  --hs-topbar-height: 64px;
+
+  --hs-radius-sm: 6px;
+  --hs-radius-md: 9px;
+  --hs-radius-lg: 12px;
+
+  --hs-shadow-sm:
+    0 1px 3px rgba(15, 35, 55, 0.06);
+
+  --hs-shadow-md:
+    0 6px 20px rgba(15, 35, 55, 0.08);
+
+  --hs-transition: 160ms ease;
+}
+
+
+/* ============================================================
+   Global
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-width: 1100px;
+  min-height: 100%;
+}
+
+body {
+  background: var(--hs-gray-050);
+  color: var(--hs-gray-950);
+
+  font-family:
+    "PingFang SC",
+    "Microsoft YaHei",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+
+
+/* ============================================================
+   Generic page
+   ============================================================ */
+
+.hs-page {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.hs-page-section {
+  margin-top: 20px;
+}
+
+.hs-section-title {
+  margin: 0 0 12px;
+
+  color: var(--hs-gray-950);
+
+  font-size: 16px;
+  font-weight: 650;
+}
+
+
+/* ============================================================
+   Element Plus refinement
+   ============================================================ */
+
+.el-card {
+  border: 1px solid var(--hs-gray-200);
+  border-radius: var(--hs-radius-lg);
+
+  box-shadow: var(--hs-shadow-sm);
+
+  transition:
+    border-color var(--hs-transition),
+    box-shadow var(--hs-transition);
+}
+
+.el-card:hover {
+  border-color: #d8e0e9;
+  box-shadow: var(--hs-shadow-md);
+}
+
+.el-alert {
+  border-radius: var(--hs-radius-md);
+}
+
+.el-table,
+.el-descriptions {
+  overflow: hidden;
+
+  border-radius: var(--hs-radius-md);
+}
+
+.el-button {
+  border-radius: var(--hs-radius-sm);
+}
+
+
+/* ============================================================
+   Status
+   ============================================================ */
+
+.hs-text-success {
+  color: var(--hs-green-600);
+}
+
+.hs-text-warning {
+  color: var(--hs-yellow-600);
+}
+
+.hs-text-danger {
+  color: var(--hs-red-600);
+}
+
+.hs-text-muted {
+  color: var(--hs-gray-600);
+}
+
+
+/* ============================================================
+   Responsive baseline
+   ============================================================ */
+
+@media (max-width: 1366px) {
+  :root {
+    --hs-sidebar-width: 220px;
+  }
+}
