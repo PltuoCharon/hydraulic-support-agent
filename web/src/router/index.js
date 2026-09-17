@@ -117,6 +117,16 @@ const routes = [
     },
   },
 
+  {
+    path: '/data-quality',
+    name: 'data-quality',
+    component: () =>
+      import('../views/DataQualityView.vue'),
+    meta: {
+      title: '数据质量',
+    },
+  },
+
 
   // ==========================================================
   // 设计计算

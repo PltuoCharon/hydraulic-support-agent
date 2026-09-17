@@ -212,6 +212,10 @@ const navGroups = [
         label: '制造商',
         path: '/vendors',
       },
+      {
+        label: '数据质量',
+        path: '/data-quality',
+      },
     ],
   },
 
