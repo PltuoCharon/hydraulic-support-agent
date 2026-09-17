@@ -1,7 +1,7 @@
 """CBR 匹配特征体系 + 野生文本归一化映射（论文表X-X代码化）"""
 
 NUMERIC_FEATURES = {
-    "coal_thickness": ("coal_thickness", None, "采高/m"),
+    "coal_thickness": ("coal_thickness", None, "煤层厚度/m"),
     "dip_angle":      ("dip_angle",      None, "倾角/°"),
     "hardness_f":     ("hardness_f",     None, "煤硬度f"),
     "depth":          ("depth",          None, "埋深/m"),

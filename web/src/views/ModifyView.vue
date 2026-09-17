@@ -72,7 +72,7 @@ const runRecalc = async () => {
   <template v-else>
     <el-descriptions :column="2" border style="margin-bottom: 16px">
       <el-descriptions-item label="支架型号">{{ target.support_model }}</el-descriptions-item>
-      <el-descriptions-item label="工况采高">{{ store.conditions?.coal_thickness }} m</el-descriptions-item>
+      <el-descriptions-item label="煤层厚度">{{ store.conditions?.coal_thickness }} m</el-descriptions-item>
     </el-descriptions>
 
     <el-alert v-if="store.required" type="info" :closable="false" style="margin-bottom: 12px"
