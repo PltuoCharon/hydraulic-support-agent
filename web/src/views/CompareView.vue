@@ -33,33 +33,138 @@ const DIMS = [
 
 const missing = computed(() => {
   const list = []
+
   for (const it of selected.value) {
-    const miss = DIMS.filter(d => parseNum(it[d.key]) == null).map(d => d.name)
-    if (miss.length) list.push(`${it.support_model} 缺: ${miss.join('、')}（按 0 计）`)
+    const miss = DIMS
+      .filter(
+        d => parseNum(it[d.key]) == null
+      )
+      .map(d => d.name)
+
+    if (miss.length) {
+      list.push(
+        `${it.support_model} 缺：${miss.join('、')}`
+      )
+    }
   }
+
   return list
 })
 
+
+const comparableDims = computed(() => {
+  if (!selected.value.length) {
+    return []
+  }
+
+  return DIMS.filter(
+    dim =>
+      selected.value.every(
+        item =>
+          parseNum(
+            item[dim.key]
+          ) != null
+      )
+  )
+})
+
+
+const excludedDims = computed(() =>
+  DIMS.filter(
+    dim =>
+      !comparableDims.value
+        .some(
+          item =>
+            item.key === dim.key
+        )
+  )
+)
+
+
 function render() {
   const sel = selected.value
-  if (!sel.length) return
-  const vals = sel.map(it => DIMS.map(d => parseNum(it[d.key]) ?? 0))
-  const maxVals = DIMS.map((d, i) => Math.max(...vals.map(r => r[i]), 0.0001))
-  const data = sel.map((it, r) => ({
-    name: it.support_model,
-    value: vals[r].map((v, i) => (v / maxVals[i]).toFixed(3)),
-  }))
+  const dims = comparableDims.value
+
+  if (
+    !sel.length
+    || dims.length < 3
+  ) {
+    return
+  }
+
+  const vals = sel.map(
+    item =>
+      dims.map(
+        dim =>
+          parseNum(
+            item[dim.key]
+          )
+      )
+  )
+
+  const maxVals = dims.map(
+    (dim, index) =>
+      Math.max(
+        ...vals.map(
+          row => row[index]
+        ),
+        0.0001,
+      )
+  )
+
+  const data = sel.map(
+    (item, rowIndex) => ({
+      name: item.support_model,
+
+      value:
+        vals[rowIndex]
+          .map(
+            (value, index) =>
+              Number(
+                (
+                  value
+                  / maxVals[index]
+                ).toFixed(3)
+              )
+          ),
+    })
+  )
+
   setOption({
     color: BRAND_COLORS,
-    legend: { data: data.map(d => d.name), bottom: 0 },
+
+    legend: {
+      data:
+        data.map(d => d.name),
+
+      bottom: 0,
+    },
+
     radar: {
-      indicator: DIMS.map(d => ({ name: `${d.name}(${d.unit})`, max: 1 })),
+      indicator:
+        dims.map(dim => ({
+          name:
+            `${dim.name}(${dim.unit})`,
+
+          max: 1,
+        })),
+
       radius: '62%',
     },
-    series: [{
-      type: 'radar', symbol: 'circle', symbolSize: 5,
-      lineStyle: { width: 2 }, data,
-    }],
+
+    series: [
+      {
+        type: 'radar',
+        symbol: 'circle',
+        symbolSize: 5,
+
+        lineStyle: {
+          width: 2,
+        },
+
+        data,
+      },
+    ],
   })
 }
 
@@ -79,7 +184,16 @@ onMounted(render)
               :title="missing.join('；')" style="margin-bottom: 12px" />
 
     <el-card>
-      <div ref="chartEl" style="width: 100%; height: 480px" />
+      <el-empty
+        v-if="comparableDims.length < 3"
+        description="共同完整维度不足 3 项，暂不绘制雷达图"
+      />
+
+      <div
+        v-show="comparableDims.length >= 3"
+        ref="chartEl"
+        style="width: 100%; height: 480px"
+      />
     </el-card>
 
     <div class="badge-row" style="margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap">
@@ -91,7 +205,25 @@ onMounted(render)
       </span>
     </div>
     <p style="color:#909399; margin-top: 8px">
-      说明：各维度以所选支架中最大值为 1 归一化，仅用于形态对比；缺数据的维度按 0 计并在上方提示。
+      说明：雷达图仅使用所有已选型号均有值的共同完整维度，
+      并以所选支架中该维度最大值为 1 归一化。
+      缺失字段不会按 0 参与计算。
+    </p>
+
+    <p style="color:#909399; margin-top: 4px">
+      当前纳入：
+      {{
+        comparableDims.length
+          ? comparableDims.map(d => d.name).join('、')
+          : '无'
+      }}
+      ；
+      排除：
+      {{
+        excludedDims.length
+          ? excludedDims.map(d => d.name).join('、')
+          : '无'
+      }}。
     </p>
   </template>
 </template>

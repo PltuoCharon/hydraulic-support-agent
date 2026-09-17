@@ -146,11 +146,9 @@ const routes = [
   // legacy route：W34 Formula Registry 已标记
   {
     path: '/modify',
-    name: 'modify',
-    component: () =>
-      import('../views/ModifyView.vue'),
+    redirect: '/calc?m=column',
     meta: {
-      title: '历史部件修改',
+      title: '立柱设计',
       legacy: true,
     },
   },

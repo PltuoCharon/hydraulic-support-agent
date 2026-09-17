@@ -1,8 +1,7 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMatchStore } from '../store/match'
-import { getRequirement } from '../api'
 import CompareBar from '../components/CompareBar.vue'
 
 const router = useRouter()
@@ -14,16 +13,6 @@ const items = computed(() => store.result?.items || [])
 // 疑=suspect(正常不会出现,匹配池已排除); 估=source含估算标注; 缺=含未查到公开参数; 实=实测/文献
 import { badge } from '../utils/badge'
 const cond = computed(() => store.conditions)
-
-// 需求值自治：进入结果页时若还没有则自己拉（不依赖输入页改动）
-onMounted(async () => {
-  if (!store.required && store.conditions?.coal_thickness) {
-    try {
-      const req = await getRequirement(store.conditions.coal_thickness)
-      store.setRequired(req || null)
-    } catch (e) { /* 静默 */ }
-  }
-})
 
 const simPct = (s) => Math.round((s ?? 0) * 100)
 const simType = (s) => (s ?? 0) >= 0.7 ? 'success' : (s ?? 0) >= 0.5 ? 'warning' : ''
@@ -52,7 +41,14 @@ const paramRows = (it) => [
         工作阻力 <b>{{ items[0]?.working_resistance }} kN</b>
       </span>
       <span class="summary-item">
-        支护强度 <b>{{ items[0]?.intensity }} MPa</b>
+        支护强度
+        <b>
+          {{
+            items[0]?.intensity != null
+              ? `${items[0].intensity} MPa`
+              : '未查到公开参数'
+          }}
+        </b>
       </span>
       <span class="summary-item">
         相似度 <b>{{ simPct(items[0]?.similarity) }}%</b>
@@ -60,9 +56,21 @@ const paramRows = (it) => [
     </div>
   </div>
 
+  <el-alert
+    v-if="items.length"
+    type="info"
+    :closable="false"
+    show-icon
+    title="旧需求阈值计算链已退出主结果展示；需求支护强度请在「设计计算 → 支护需求」中按已登记公式计算。"
+    style="margin-bottom: 12px"
+  />
+
   <el-card v-if="items.length" style="margin-bottom: 16px">
     <template #header><b>Top-N 参数对比</b></template>
-    <CompareBar :items="items" :required="store.required" />
+    <CompareBar
+      :items="items"
+      :required="null"
+    />
   </el-card>
 
   <el-empty v-if="!store.result" description="还没有匹配结果">
@@ -94,8 +102,14 @@ const paramRows = (it) => [
         <div class="card-head">
           <el-checkbox :model-value="store.compare.some(c => c.support_model === it.support_model)"
                        @change="store.toggleCompare(it)" />
-          <el-button size="small" type="warning" plain
-                     @click="router.push('/modify')">去修改</el-button>
+          <el-button
+            size="small"
+            type="primary"
+            plain
+            @click="router.push('/calc?m=column')"
+          >
+            进入立柱设计
+          </el-button>
           <b>#{{ i + 1 }} {{ it.support_model }}</b>
             <el-tooltip :content="badge(it).tip" placement="top">
               <el-tag :type="badge(it).type" size="small" effect="plain"
