@@ -109,3 +109,7 @@ export const postColumnDesign = (data) =>
 
 export const postColumnStrength = (data) =>
   http.post('/api/calc/column-strength', data)
+
+// W34-D6: 数据质量中心
+export const getDataQuality = () =>
+  http.get('/api/supports/quality')

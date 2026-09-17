@@ -25,7 +25,7 @@ def spectrum():
     """W30-D1 架型谱系(必须注册在 /{model_id} 之前, 否则被动态段吞成 422)"""
     items = queries.spectrum()
     return ok({"total": len(items),
-               "axis_note": "阻力/采高均来自公开型谱值; 控顶距/支护强度等字段估算情况见 est_fields",
+               "axis_note": "阻力/支撑高度均来自公开型谱值；支护长度参数/支护强度等字段估算情况见 est_fields",
                "items": items})
 
 
@@ -33,6 +33,14 @@ def spectrum():
 def vendors():
     """W30-D2 厂商分布(必须注册在 /{model_id} 之前)"""
     return ok(queries.vendor_dist())
+
+
+@router.get("/quality")
+def data_quality():
+    """支架库与矿区库字段完整度汇总。"""
+    return ok(
+        queries.data_quality_summary()
+    )
 
 
 @router.get("/{model_id}")

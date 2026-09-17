@@ -112,7 +112,7 @@ def spectrum() -> list[dict]:
         src = r.get("source") or ""
         est = []
         if "控顶长度" in src and "估算" in src:
-            est.append("控顶长度")
+            est.append("支护长度参数")
         if "复算估算" in src or "二阶估算" in src:
             est.append("支护强度")
         if "未查到公开参数" in src:
@@ -124,18 +124,377 @@ def spectrum() -> list[dict]:
 
 
 def vendor_dist() -> dict:
-    """W30-D2 厂商分布。verified 白名单(铁律4);
-    口径: manufacturer 为 NULL → 未知(占位第一大条, 灰色);
-    '国产' 为采集期占位值, 原样保留由前端标橙注明, 不静默归并。"""
-    rows = _fetch("""SELECT COALESCE(NULLIF(TRIM(manufacturer), ''), '未知') AS mfr,
-                            COUNT(*) AS cnt
-                     FROM support_models
-                     WHERE data_status = 'verified'
-                     GROUP BY mfr
-                     ORDER BY (mfr = '未知') DESC, cnt DESC, mfr""")
-    total = sum(r["cnt"] for r in rows)
-    unknown = next((r["cnt"] for r in rows if r["mfr"] == "未知"), 0)
+    """制造商字段分布。
+
+    兼容旧接口：
+    - total / known / unknown / coverage / items 保持不变
+    - items 仍包含“未知”，避免破坏 W30 既有契约
+
+    新增治理口径：
+    - “未知”属于字段缺失，不是制造商类别
+    - “国产”属于历史占位值，不作为已核实制造商
+    - known_items 仅用于真实制造商分布图
+    """
+    rows = _fetch("""
+        SELECT
+            COALESCE(NULLIF(TRIM(manufacturer), ''), '未知') AS mfr,
+            COUNT(*) AS cnt
+        FROM support_models
+        WHERE data_status = 'verified'
+        GROUP BY mfr
+        ORDER BY
+            (mfr = '未知') DESC,
+            cnt DESC,
+            mfr
+    """)
+
+    items = [
+        {
+            "manufacturer": r["mfr"],
+            "cnt": int(r["cnt"]),
+        }
+        for r in rows
+    ]
+
+    total = sum(i["cnt"] for i in items)
+
+    unknown = next(
+        (
+            i["cnt"]
+            for i in items
+            if i["manufacturer"] == "未知"
+        ),
+        0,
+    )
+
+    placeholder = next(
+        (
+            i["cnt"]
+            for i in items
+            if i["manufacturer"] == "国产"
+        ),
+        0,
+    )
+
+    # legacy known 口径保持兼容：
+    # 只排除 NULL/空字段映射的“未知”。
     known = total - unknown
-    return {"total": total, "known": known, "unknown": unknown,
-            "coverage": round(known / total * 100, 1) if total else 0,
-            "items": [{"manufacturer": r["mfr"], "cnt": r["cnt"]} for r in rows]}
+
+    usable_known = total - unknown - placeholder
+
+    known_items = [
+        i
+        for i in items
+        if i["manufacturer"] not in {"未知", "国产"}
+    ]
+
+    return {
+        "total": total,
+        "known": known,
+        "unknown": unknown,
+        "coverage": (
+            round(known / total * 100, 1)
+            if total
+            else 0
+        ),
+
+        "placeholder": placeholder,
+
+        "usable_known": usable_known,
+
+        "usable_coverage": (
+            round(usable_known / total * 100, 1)
+            if total
+            else 0
+        ),
+
+        "items": items,
+        "known_items": known_items,
+    }
+
+
+def data_quality_summary() -> dict:
+    """W34-D6 数据质量中心聚合数据。
+
+    本接口只描述：
+    - 数据状态
+    - 字段完整度
+    - 缺失情况
+    - 当前来源字段结构
+
+    “字段有值”不代表参数正确，也不代表工程可信。
+    """
+
+    status = _fetchone("""
+        SELECT
+            COUNT(*) AS total,
+            SUM(data_status = 'verified') AS verified,
+            SUM(data_status = 'suspect') AS suspect
+        FROM support_models
+    """)
+
+    support = _fetchone("""
+        SELECT
+            COUNT(*) AS total,
+
+            SUM(
+                manufacturer IS NOT NULL
+                AND TRIM(manufacturer) <> ''
+                AND manufacturer <> '国产'
+            ) AS manufacturer_known,
+
+            SUM(
+                type IS NOT NULL
+                AND TRIM(type) <> ''
+            ) AS type_known,
+
+            SUM(
+                intensity IS NOT NULL
+                AND TRIM(CAST(intensity AS CHAR)) <> ''
+            ) AS intensity_known,
+
+            SUM(weight IS NOT NULL)
+                AS weight_known,
+
+            SUM(initial_force IS NOT NULL)
+                AS initial_force_known,
+
+            SUM(
+                source IS NOT NULL
+                AND TRIM(source) <> ''
+            ) AS source_known,
+
+            SUM(
+                source LIKE '%%估算%%'
+                OR source LIKE '%%复算%%'
+            ) AS estimated_rows
+
+        FROM support_models
+        WHERE data_status = 'verified'
+    """)
+
+    areas = _fetchone("""
+        SELECT
+            COUNT(*) AS total,
+
+            SUM(coal_thickness IS NOT NULL)
+                AS coal_thickness_known,
+
+            SUM(dip_angle IS NOT NULL)
+                AS dip_angle_known,
+
+            SUM(
+                mining_height_min IS NOT NULL
+                OR mining_height_max IS NOT NULL
+            ) AS mining_height_known,
+
+            SUM(hardness_f IS NOT NULL)
+                AS hardness_known,
+
+            SUM(
+                roof_category IS NOT NULL
+                AND TRIM(roof_category) <> ''
+            ) AS roof_known,
+
+            SUM(floor_pressure IS NOT NULL)
+                AS floor_pressure_known,
+
+            SUM(
+                mine_pressure IS NOT NULL
+                AND TRIM(mine_pressure) <> ''
+            ) AS mine_pressure_known,
+
+            SUM(
+                gas_level IS NOT NULL
+                AND TRIM(gas_level) <> ''
+            ) AS gas_known,
+
+            SUM(depth IS NOT NULL)
+                AS depth_known,
+
+            SUM(face_length IS NOT NULL)
+                AS face_length_known,
+
+            SUM(
+                lng IS NOT NULL
+                AND lat IS NOT NULL
+            ) AS coordinate_known
+
+        FROM mining_areas
+        WHERE is_test = 0
+    """)
+
+    source_schema = _fetchone("""
+        SELECT
+            DATA_TYPE AS data_type,
+            CHARACTER_MAXIMUM_LENGTH AS max_length
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'support_models'
+          AND COLUMN_NAME = 'source'
+    """)
+
+    def metric(key, label, known, total):
+        total = int(total or 0)
+        known = int(known or 0)
+
+        return {
+            "key": key,
+            "label": label,
+            "known": known,
+            "missing": max(total - known, 0),
+            "total": total,
+            "coverage": (
+                round(known / total * 100, 1)
+                if total
+                else 0
+            ),
+        }
+
+    support_total = int(support["total"] or 0)
+    area_total = int(areas["total"] or 0)
+
+    support_fields = [
+        metric(
+            "manufacturer",
+            "制造商",
+            support["manufacturer_known"],
+            support_total,
+        ),
+        metric(
+            "type",
+            "架型",
+            support["type_known"],
+            support_total,
+        ),
+        metric(
+            "intensity",
+            "支护强度",
+            support["intensity_known"],
+            support_total,
+        ),
+        metric(
+            "weight",
+            "支架质量",
+            support["weight_known"],
+            support_total,
+        ),
+        metric(
+            "initial_force",
+            "初撑力",
+            support["initial_force_known"],
+            support_total,
+        ),
+        metric(
+            "source",
+            "主要来源摘要",
+            support["source_known"],
+            support_total,
+        ),
+    ]
+
+    area_fields = [
+        metric(
+            "coal_thickness",
+            "煤层厚度",
+            areas["coal_thickness_known"],
+            area_total,
+        ),
+        metric(
+            "dip_angle",
+            "煤层倾角",
+            areas["dip_angle_known"],
+            area_total,
+        ),
+        metric(
+            "mining_height",
+            "采高范围",
+            areas["mining_height_known"],
+            area_total,
+        ),
+        metric(
+            "hardness_f",
+            "煤层硬度",
+            areas["hardness_known"],
+            area_total,
+        ),
+        metric(
+            "roof_category",
+            "顶板类型",
+            areas["roof_known"],
+            area_total,
+        ),
+        metric(
+            "floor_pressure",
+            "底板比压",
+            areas["floor_pressure_known"],
+            area_total,
+        ),
+        metric(
+            "mine_pressure",
+            "矿压特征",
+            areas["mine_pressure_known"],
+            area_total,
+        ),
+        metric(
+            "gas_level",
+            "瓦斯",
+            areas["gas_known"],
+            area_total,
+        ),
+        metric(
+            "depth",
+            "埋深",
+            areas["depth_known"],
+            area_total,
+        ),
+        metric(
+            "face_length",
+            "工作面长度",
+            areas["face_length_known"],
+            area_total,
+        ),
+        metric(
+            "coordinate",
+            "城市级近似坐标",
+            areas["coordinate_known"],
+            area_total,
+        ),
+    ]
+
+    return {
+        "supports": {
+            "total": int(status["total"] or 0),
+            "verified": int(status["verified"] or 0),
+            "suspect": int(status["suspect"] or 0),
+            "verified_fields": support_fields,
+            "estimated_rows": int(
+                support["estimated_rows"] or 0
+            ),
+        },
+
+        "areas": {
+            "total": area_total,
+            "fields": area_fields,
+        },
+
+        "source_schema": {
+            "data_type": (
+                source_schema["data_type"]
+                if source_schema
+                else None
+            ),
+            "max_length": (
+                int(source_schema["max_length"])
+                if source_schema
+                and source_schema["max_length"] is not None
+                else None
+            ),
+        },
+
+        "notes": [
+            "字段完整度仅表示字段是否有值，不代表数据准确性或工程可信度。",
+            "verified 与 suspect 为数据状态；suspect 默认不参与谱系与制造商分析。",
+            "source 当前仅作为主要来源摘要使用，详细参数级 provenance 尚待独立建模。",
+        ],
+    }
