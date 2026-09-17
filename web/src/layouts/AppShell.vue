@@ -137,6 +137,10 @@
 
     </section>
 
+    <AgentDock
+      :context-label="agentContextLabel"
+    />
+
   </div>
 </template>
 
@@ -155,6 +159,7 @@ import {
 
 import { getStats } from '../api'
 import StatusBadge from '../components/ui/StatusBadge.vue'
+import AgentDock from '../components/AgentDock.vue'
 
 
 const route = useRoute()
@@ -246,6 +251,25 @@ const navGroups = [
 const pageTitle = computed(
   () => route.meta?.title || '工程工作台'
 )
+
+
+const agentContextLabel = computed(() => {
+  if (route.path === '/calc') {
+    const moduleLabels = {
+      qneed: '支护需求',
+      column: '立柱设计与校核',
+    }
+
+    const moduleLabel =
+      moduleLabels[route.query.m]
+
+    return moduleLabel
+      ? `设计计算 · ${moduleLabel}`
+      : '设计计算'
+  }
+
+  return pageTitle.value
+})
 
 
 const isActive = (path) => {
