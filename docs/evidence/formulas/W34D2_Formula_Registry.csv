@@ -20,3 +20,6 @@ F-LEG-005,legacy_recalc,旧支护强度计算,legacy_review,"q=F_work*eta/top_ar
 F-SC-001,support_calc,单柱推力,legacy_review,"F=p*pi*D^2/4","D;p",F,kN,"MT/T 556-1996标注待核页码","旧Agent工具使用","app/services/support_calc.py","与F-COL-002重复"
 F-SC-002,support_calc,整架工作阻力,legacy_review,"F=sum(F_column)*eta","F_column;n;eta",F,kN,"历史实现","旧Agent工具使用","app/services/support_calc.py","eta位置与/recalc不同"
 F-SC-003,support_calc,支护强度复算,legacy_review,"q=F/(center_dist*canopy_len)/1000","F;center_dist;canopy_len",q,MPa,"历史实现","旧Agent工具使用","app/services/support_calc.py","canopy_len工程定义待核"
+F-QN-005,q_need,控顶面积,active,A_control=Sc*Bc,center_dist_m;control_width_m,A_control,m2,KA/T 554-1996附录D：Sc为支架中心距，Bc为控顶宽度,W35-D2标准代数基准通过,app/services/calc/resistance.py,Bc必须显式/已核；禁止由canopy_len静默推断
+F-QN-006,q_need,基础需求工作阻力,active,F_base=q_need*A_control*1000,q_need_mpa;A_control,F_base,kN,KA/T 554-1996附录D换算结构；1MPa=1000kN/m2,W35-D2标准代数基准通过,app/services/calc/resistance.py,q_need为项目控制需求支护强度，不宣称标准直接定义q_need
+F-QN-007,q_need,额定需求工作阻力,active,F_rated=F_base/Ks,F_base;support_efficiency,F_rated,kN,KA/T 554-1996附录D：Ks为液压支架支撑效率,W35-D2标准代数基准通过,app/services/calc/resistance.py,Ks不得使用全局默认eta；须显式输入或由已核标准规则确定
