@@ -92,8 +92,8 @@
       formula-id="F-COL-001~003"
       title="立柱承载与缸径设计关系"
       formula="P = n × (π/4) × D² × p × η"
-      description="由设计工作阻力、承载立柱根数、工作压力和效率反算理论缸径，并向上圆整到程序维护的标准缸径系列。"
-      source="当前立柱设计计算服务；计算结果中继续保留具体来源说明。"
+      description="由设计工作阻力、承载立柱根数、立柱工作压力和显式输入的历史修正系数 η（物理口径待核）反算理论缸径，并向上圆整到程序维护的标准缸径系列。"
+      source="标准缸径系列：GB/T 2348；含 η 的计算关系为项目参数化计算式，η 物理口径待核。"
       class="column-formula"
     />
 
@@ -140,7 +140,7 @@
                   <span class="unit">根</span>
                 </el-form-item>
 
-                <el-form-item label="工作压力">
+                <el-form-item label="立柱工作压力">
                   <el-input-number
                     v-model="designForm.p_mpa"
                     :min="5"
@@ -151,7 +151,7 @@
                   <span class="unit">MPa</span>
                 </el-form-item>
 
-                <el-form-item label="效率 η">
+                <el-form-item label="历史修正系数 η（待核）">
                   <el-input-number
                     v-model="designForm.eta"
                     :min="0.8"
@@ -236,7 +236,7 @@
                   <b>{{ designRes.d_std_mm }}</b> mm
                 </el-descriptions-item>
 
-                <el-descriptions-item label="圆整后实际承载力">
+                <el-descriptions-item label="圆整后计算承载力">
                   <b>{{ designRes.p_actual_kn }}</b> kN
                 </el-descriptions-item>
 
@@ -293,7 +293,7 @@
             <EmptyState
               v-else
               title="等待缸径计算"
-              description="输入工作阻力、承载立柱根数、工作压力和效率后执行计算。结果区将给出理论缸径、标准缸径及实际承载力。"
+              description="输入工作阻力、承载立柱根数、立柱工作压力和历史修正系数 η 后执行计算。结果区将给出理论缸径、标准缸径及计算承载力。"
             />
 
           </el-col>

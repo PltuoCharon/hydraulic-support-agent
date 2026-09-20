@@ -73,8 +73,8 @@ def q_need(req: QNeedReq):
 class ColumnDesignReq(BaseModel):
     p_kn: float = Field(..., description="支架设计工作阻力 kN")
     n: int = Field(..., description="承载立柱根数")
-    p_mpa: float = Field(..., description="设计工作压力 MPa")
-    eta: float = Field(0.9, description="效率")
+    p_mpa: float = Field(..., description="立柱工作压力 MPa")
+    eta: float = Field(..., description="历史立柱修正系数 η（物理口径待核；须显式输入）")
     p_set_kn: Optional[float] = Field(
         None,
         description="初撑力 kN；为空则不做初撑力比校核",

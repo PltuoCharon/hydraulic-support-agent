@@ -48,6 +48,6 @@ def test_design_full_flow():
 
 def test_invalid_input_raises():
     with pytest.raises(ValueError):
-        bore_diameter(10, 1, 31.5)
+        bore_diameter(10, 1, 31.5, eta=1.0)
     with pytest.raises(ValueError):
         column_force(320, 100)
