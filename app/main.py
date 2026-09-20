@@ -1,6 +1,6 @@
 from app.config import settings
 from fastapi import FastAPI
-from app.routers import areas, supports, match, chat, guide, mining_areas, calc
+from app.routers import areas, supports, match, chat, guide, mining_areas, calc, formulas
 
 app = FastAPI(
     title="液压支架智能选型 API",
@@ -44,6 +44,7 @@ app.include_router(match.router,    prefix="/api/match",    tags=["CBR匹配"])
 app.include_router(chat.router,     prefix="/api/chat",     tags=["对话"])
 app.include_router(guide.router,    prefix="/api/guide",   tags=["引导选型"])
 app.include_router(calc.router,     prefix="/api/calc",     tags=["设计计算"])
+app.include_router(formulas.router, prefix="/api",          tags=["公式登记"])
 
 
 # ===== W23-D4/D6 新增：工况需求值 + 部件重算（参数全部从 param_dependencies 读）=====
