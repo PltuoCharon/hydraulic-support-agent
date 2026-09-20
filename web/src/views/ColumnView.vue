@@ -225,7 +225,13 @@
                   v-if="designRes.record_id != null"
                   label="计算记录"
                 >
-                  <el-tag type="info">#{{ designRes.record_id }}</el-tag>
+                  <el-tag
+                    type="info"
+                    style="cursor: pointer"
+                    @click="openRecordDetail(designRes.record_id)"
+                  >
+                    #{{ designRes.record_id }}
+                  </el-tag>
                 </el-descriptions-item>
 
                 <el-descriptions-item label="理论缸径">
@@ -299,6 +305,154 @@
           </el-col>
 
         </el-row>
+
+        <!-- W35-D6: 最近计算记录，仅只读查看 -->
+        <el-card
+          shadow="never"
+          style="margin-top: 18px"
+        >
+          <template #header>
+            <div
+              style="display: flex; justify-content: space-between; align-items: center"
+            >
+              <b>最近计算记录</b>
+
+              <el-button
+                size="small"
+                :loading="recordListLoading"
+                @click="loadRecentRecords"
+              >
+                刷新
+              </el-button>
+            </div>
+          </template>
+
+          <el-table
+            v-loading="recordListLoading"
+            :data="recordList"
+            size="small"
+            border
+            style="width: 100%; cursor: pointer"
+            @row-click="(row) => openRecordDetail(row.id)"
+          >
+            <el-table-column label="记录" width="90">
+              <template #default="{ row }">
+                #{{ row.id }}
+              </template>
+            </el-table-column>
+
+            <el-table-column label="时间" min-width="170">
+              <template #default="{ row }">
+                {{ formatRecordTime(row.created_at) }}
+              </template>
+            </el-table-column>
+
+            <el-table-column label="运行模式" width="110">
+              <template #default="{ row }">
+                {{ formatRunMode(row.run_mode) }}
+              </template>
+            </el-table-column>
+
+            <el-table-column label="上下文来源" width="120">
+              <template #default="{ row }">
+                {{ formatContextSource(row.context_source_type) }}
+              </template>
+            </el-table-column>
+
+            <el-table-column label="Formula ID" min-width="210">
+              <template #default="{ row }">
+                {{ row.formula_ids.join(' / ') }}
+              </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="90">
+              <template #default="{ row }">
+                <el-button
+                  link
+                  type="primary"
+                  @click.stop="openRecordDetail(row.id)"
+                >
+                  查看
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <EmptyState
+            v-if="!recordListLoading && recordList.length === 0"
+            title="暂无计算记录"
+            description="成功执行一次立柱设计后，计算记录将在这里显示。"
+          />
+
+          <el-drawer
+            v-model="recordDrawerOpen"
+            title="计算记录详情"
+            size="720px"
+          >
+            <div v-loading="recordDetailLoading">
+              <template v-if="recordDetail">
+                <el-descriptions
+                  :column="2"
+                  border
+                >
+                  <el-descriptions-item label="记录编号">
+                    #{{ recordDetail.id }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="时间">
+                    {{ formatRecordTime(recordDetail.created_at) }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="运行模式">
+                    {{ formatRunMode(recordDetail.run_mode) }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="上下文来源">
+                    {{ formatContextSource(recordDetail.context_source_type) }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="上下文确认">
+                    {{ formatConfirmed(recordDetail.context_confirmed) }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="记录版本">
+                    {{ recordDetail.record_version }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item
+                    label="Formula ID"
+                    :span="2"
+                  >
+                    <el-tag
+                      v-for="formulaId in recordDetail.formula_ids"
+                      :key="formulaId"
+                      type="info"
+                      style="margin-right: 6px"
+                    >
+                      {{ formulaId }}
+                    </el-tag>
+                  </el-descriptions-item>
+                </el-descriptions>
+
+                <el-divider content-position="left">
+                  输入快照
+                </el-divider>
+                <pre style="white-space: pre-wrap; word-break: break-word">{{ prettyJson(recordDetail.inputs_snapshot) }}</pre>
+
+                <el-divider content-position="left">
+                  输出快照
+                </el-divider>
+                <pre style="white-space: pre-wrap; word-break: break-word">{{ prettyJson(recordDetail.outputs_snapshot) }}</pre>
+
+                <el-divider content-position="left">
+                  上下文快照
+                </el-divider>
+                <pre style="white-space: pre-wrap; word-break: break-word">{{ prettyJson(recordDetail.context_snapshot) }}</pre>
+              </template>
+            </div>
+          </el-drawer>
+        </el-card>
+
       </el-tab-pane>
 
 
@@ -661,6 +815,8 @@
 import { computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
+  getCalculationRecord,
+  getCalculationRecords,
   postColumnDesign,
   postColumnStrength,
 } from '../api'
@@ -705,6 +861,12 @@ const designLoading = ref(false)
 const designRes = ref(null)
 const designExampleLoaded = ref(false)
 
+const recordList = ref([])
+const recordListLoading = ref(false)
+const recordDrawerOpen = ref(false)
+const recordDetailLoading = ref(false)
+const recordDetail = ref(null)
+
 const designForm = reactive({
   p_kn:
     designContext.value?.target?.resistance_kn
@@ -714,6 +876,70 @@ const designForm = reactive({
   eta: null,
   p_set_kn: null,
 })
+
+const formatRecordTime = (value) => {
+  if (!value) return '—'
+  return String(value).replace('T', ' ')
+}
+
+const formatRunMode = (value) => {
+  const map = {
+    engineering: '工程计算',
+    example: '计算示例',
+  }
+  return map[value] || value || '—'
+}
+
+const formatContextSource = (value) => {
+  const map = {
+    selected_support: '推荐支架',
+    calculated_requirement: '需求计算',
+    user_input: '用户输入',
+  }
+  return map[value] || '无上游上下文'
+}
+
+const formatConfirmed = (value) => {
+  if (value === true) return '已确认'
+  if (value === false) return '未确认'
+  return '不适用'
+}
+
+const prettyJson = (value) => {
+  if (value == null) return '—'
+  return JSON.stringify(value, null, 2)
+}
+
+
+const loadRecentRecords = async () => {
+  recordListLoading.value = true
+
+  try {
+    recordList.value = await getCalculationRecords({
+      calc_type: 'column_design',
+      limit: 20,
+    })
+  } catch (e) {
+    // 全局 Axios 拦截器统一提示；保留已有列表。
+  } finally {
+    recordListLoading.value = false
+  }
+}
+
+const openRecordDetail = async (recordId) => {
+  recordDrawerOpen.value = true
+  recordDetailLoading.value = true
+  recordDetail.value = null
+
+  try {
+    recordDetail.value = await getCalculationRecord(recordId)
+  } catch (e) {
+    // 全局 Axios 拦截器统一提示。
+  } finally {
+    recordDetailLoading.value = false
+  }
+}
+
 
 const designExampleIsCurrent = () =>
   designExampleLoaded.value === true &&
@@ -821,6 +1047,7 @@ const runDesign = async () => {
     // 项目Axios拦截器成功时已经返回 body.data，
     // 因此这里直接接计算结果，不再读取 r.code / r.data。
     designRes.value = await postColumnDesign(payload)
+    loadRecentRecords()
 
   } catch (e) {
     // 全局Axios拦截器统一处理错误提示。
@@ -828,6 +1055,9 @@ const runDesign = async () => {
     designLoading.value = false
   }
 }
+
+
+loadRecentRecords()
 
 
 // ============================================================

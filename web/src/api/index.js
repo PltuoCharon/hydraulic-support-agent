@@ -110,6 +110,14 @@ export const postColumnDesign = (data) =>
 export const postColumnStrength = (data) =>
   http.post('/api/calc/column-strength', data)
 
+
+// W35-D6: 计算记录只读查询
+export const getCalculationRecords = (params = {}) =>
+  http.get('/api/calc/records', { params })
+
+export const getCalculationRecord = (recordId) =>
+  http.get(`/api/calc/records/${recordId}`)
+
 // W34-D6: 数据质量中心
 export const getDataQuality = () =>
   http.get('/api/supports/quality')
