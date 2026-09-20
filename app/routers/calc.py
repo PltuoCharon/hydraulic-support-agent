@@ -25,6 +25,11 @@ from app.services.calc.column_strength import (
     euler_buckling,
 )
 
+from app.services.calculation_records import (
+    create_calculation_record,
+    normalize_context,
+)
+
 router = APIRouter()
 
 
@@ -75,6 +80,11 @@ class ColumnDesignReq(BaseModel):
         description="初撑力 kN；为空则不做初撑力比校核",
     )
 
+    run_mode: str = "engineering"
+    context_source_type: Optional[str] = None
+    context_confirmed: Optional[bool] = None
+    context_snapshot: Optional[dict] = None
+
 
 @router.post("/column-design")
 def column_design(req: ColumnDesignReq):
@@ -92,6 +102,43 @@ def column_design(req: ColumnDesignReq):
             eta=req.eta,
             p_set_kn=req.p_set_kn,
         )
+
+        context_source_type, context_confirmed, context_snapshot = normalize_context(
+            p_kn=req.p_kn,
+            run_mode=req.run_mode,
+            context_source_type=req.context_source_type,
+            context_confirmed=req.context_confirmed,
+            context_snapshot=req.context_snapshot,
+        )
+
+        formula_ids = [
+            "F-COL-001",
+            "F-COL-002",
+        ]
+        if req.p_set_kn is not None:
+            formula_ids.append("F-COL-003")
+
+        inputs_snapshot = {
+            "p_kn": req.p_kn,
+            "n": req.n,
+            "p_mpa": req.p_mpa,
+            "eta": req.eta,
+            "p_set_kn": req.p_set_kn,
+        }
+
+        record_id = create_calculation_record(
+            calc_type="column_design",
+            run_mode=req.run_mode,
+            formula_ids=formula_ids,
+            inputs_snapshot=inputs_snapshot,
+            outputs_snapshot=data,
+            context_source_type=context_source_type,
+            context_confirmed=context_confirmed,
+            context_snapshot=context_snapshot,
+        )
+
+        data = dict(data)
+        data["record_id"] = record_id
 
         return {"code": 0, "data": data}
 

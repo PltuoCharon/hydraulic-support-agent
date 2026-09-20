@@ -302,8 +302,10 @@ def _w33d5_client():
     return TestClient(app)
 
 
-def test_calc_column_design_benchmark():
+def test_calc_column_design_benchmark(monkeypatch):
     """D3基准：2533kN / 1柱 / 31.5MPa / eta=1 → D≈320mm。"""
+    import app.routers.calc as calc_router
+    monkeypatch.setattr(calc_router, "create_calculation_record", lambda **kwargs: 900001)
     client = _w33d5_client()
 
     r = client.post(
@@ -331,6 +333,7 @@ def test_calc_column_design_benchmark():
     assert abs(d["setting_ratio_pct"] - 75.0) <= 0.2
     assert d["setting_ok"] is True
     assert d["source"]
+    assert d["record_id"] == 900001
 
 
 def test_calc_column_design_invalid():

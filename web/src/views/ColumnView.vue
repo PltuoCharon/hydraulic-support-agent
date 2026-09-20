@@ -221,6 +221,13 @@
                 :column="2"
                 border
               >
+                <el-descriptions-item
+                  v-if="designRes.record_id != null"
+                  label="计算记录"
+                >
+                  <el-tag type="info">#{{ designRes.record_id }}</el-tag>
+                </el-descriptions-item>
+
                 <el-descriptions-item label="理论缸径">
                   <b>{{ designRes.d_calc_mm }}</b> mm
                 </el-descriptions-item>
@@ -696,6 +703,7 @@ const contextConfirmed = ref(
 const enableSetting = ref(false)
 const designLoading = ref(false)
 const designRes = ref(null)
+const designExampleLoaded = ref(false)
 
 const designForm = reactive({
   p_kn:
@@ -706,6 +714,16 @@ const designForm = reactive({
   eta: null,
   p_set_kn: null,
 })
+
+const designExampleIsCurrent = () =>
+  designExampleLoaded.value === true &&
+  designContext.value == null &&
+  designForm.p_kn === 2533 &&
+  designForm.n === 1 &&
+  designForm.p_mpa === 31.5 &&
+  designForm.eta === 1.0 &&
+  enableSetting.value === true &&
+  designForm.p_set_kn === 1900
 
 const designReady = computed(() => {
   const required = [
@@ -744,6 +762,7 @@ const fillDesignExample = () => {
   clearDesignTransfer()
   designContext.value = null
   contextConfirmed.value = true
+  designExampleLoaded.value = true
 
   designForm.p_kn = 2533
   designForm.n = 1
@@ -766,11 +785,33 @@ const runDesign = async () => {
   designLoading.value = true
 
   try {
+    const runMode =
+      designExampleIsCurrent()
+        ? "example"
+        : "engineering"
+
     const payload = {
       p_kn: designForm.p_kn,
       n: designForm.n,
       p_mpa: designForm.p_mpa,
       eta: designForm.eta,
+      run_mode: runMode,
+      context_source_type:
+        runMode === "example"
+          ? null
+          : (designContext.value?.source_type ?? null),
+      context_confirmed:
+        runMode === "example"
+          ? null
+          : (
+              designContext.value != null
+                ? contextConfirmed.value
+                : null
+            ),
+      context_snapshot:
+        runMode === "example"
+          ? null
+          : designContext.value,
     }
 
     if (enableSetting.value) {
