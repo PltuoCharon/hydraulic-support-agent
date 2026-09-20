@@ -25,6 +25,69 @@
       </template>
     </el-alert>
 
+    <el-card
+      v-if="designContext"
+      shadow="never"
+      class="design-context"
+      style="margin-bottom: 18px"
+    >
+      <template #header>
+        <b>设计上下文</b>
+      </template>
+
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="来源">
+          {{
+            designContext.source_type === "selected_support"
+              ? "推荐支架"
+              : "需求计算"
+          }}
+        </el-descriptions-item>
+
+        <el-descriptions-item label="支架型号">
+          {{ designContext.target.support_model || "—" }}
+        </el-descriptions-item>
+
+        <el-descriptions-item label="目标工作阻力">
+          {{ designContext.target.resistance_kn }} kN
+        </el-descriptions-item>
+
+        <el-descriptions-item label="数据状态">
+          {{ designContext.provenance?.data_status || "未提供" }}
+        </el-descriptions-item>
+
+        <el-descriptions-item label="来源记录" :span="2">
+          {{ designContext.provenance?.source_text || "未提供" }}
+        </el-descriptions-item>
+      </el-descriptions>
+
+      <el-alert
+        v-if="contextConfirmed === false"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="请确认该工作阻力作为本次立柱设计载荷依据。"
+        style="margin-top: 12px"
+      />
+
+      <el-button
+        v-if="contextConfirmed === false"
+        type="primary"
+        style="margin-top: 12px"
+        @click="confirmDesignContext"
+      >
+        确认并用于立柱设计
+      </el-button>
+
+      <el-tag
+        v-else
+        type="success"
+        style="margin-top: 12px"
+      >
+        设计上下文已确认
+      </el-tag>
+    </el-card>
+
     <FormulaCard
       formula-id="F-COL-001~003"
       title="立柱承载与缸径设计关系"
@@ -125,6 +188,7 @@
                   <el-button
                     type="primary"
                     :loading="designLoading"
+                    :disabled="designReady === false"
                     @click="runDesign"
                   >
                     开始计算
@@ -587,7 +651,8 @@
 
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   postColumnDesign,
   postColumnStrength,
@@ -595,6 +660,7 @@ import {
 
 import FormulaCard from '../components/ui/FormulaCard.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
+import { clearDesignTransfer, readDesignTransfer, writeDesignTransfer } from '../utils/designTransfer'
 
 
 const tab = ref('design')
@@ -604,20 +670,81 @@ const tab = ref('design')
 // 缸径设计
 // ============================================================
 
-const enableSetting = ref(true)
+const route = useRoute()
+
+const transferRequested = [
+  "selected_support",
+  "calculated_requirement",
+].includes(route.query.ctx)
+
+const transferPayload =
+  transferRequested
+    ? readDesignTransfer()
+    : null
+
+const designContext = ref(
+  transferPayload?.source_type === route.query.ctx
+    ? transferPayload
+    : null,
+)
+
+const contextConfirmed = ref(
+  designContext.value == null ||
+  designContext.value.confirmed === true,
+)
+
+const enableSetting = ref(false)
 const designLoading = ref(false)
 const designRes = ref(null)
 
 const designForm = reactive({
-  p_kn: 2533,
-  n: 1,
-  p_mpa: 31.5,
-  eta: 1.0,
-  p_set_kn: 1900,
+  p_kn:
+    designContext.value?.target?.resistance_kn
+    ?? null,
+  n: null,
+  p_mpa: null,
+  eta: null,
+  p_set_kn: null,
 })
+
+const designReady = computed(() => {
+  const required = [
+    designForm.p_kn,
+    designForm.n,
+    designForm.p_mpa,
+    designForm.eta,
+  ]
+
+  if (contextConfirmed.value === false) return false
+  if (required.every(Number.isFinite) === false) return false
+  if (
+    enableSetting.value &&
+    Number.isFinite(designForm.p_set_kn) === false
+  ) {
+    return false
+  }
+
+  return true
+})
+
+const confirmDesignContext = () => {
+  contextConfirmed.value = true
+
+  if (designContext.value != null) {
+    designContext.value = {
+      ...designContext.value,
+      confirmed: true,
+    }
+    writeDesignTransfer(designContext.value)
+  }
+}
 
 
 const fillDesignExample = () => {
+  clearDesignTransfer()
+  designContext.value = null
+  contextConfirmed.value = true
+
   designForm.p_kn = 2533
   designForm.n = 1
   designForm.p_mpa = 31.5
@@ -634,6 +761,8 @@ const clearDesign = () => {
 
 
 const runDesign = async () => {
+  if (designReady.value === false) return
+
   designLoading.value = true
 
   try {

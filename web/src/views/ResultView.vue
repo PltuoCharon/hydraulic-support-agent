@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMatchStore } from '../store/match'
 import CompareBar from '../components/CompareBar.vue'
+import { writeDesignTransfer } from '../utils/designTransfer'
 
 const router = useRouter()
 const store = useMatchStore()
@@ -25,6 +26,37 @@ const paramRows = (it) => [
   { k: '中心距',   v: it.center_dist != null ? it.center_dist + ' m' : '—' },
   { k: '初撑力',   v: it.initial_force != null ? it.initial_force + ' kN' : '—' },
 ]
+
+const goColumnDesign = (it) => {
+  const resistance = Number(it?.working_resistance)
+
+  if (Number.isFinite(resistance) === false || resistance <= 0) {
+    return
+  }
+
+  writeDesignTransfer({
+    version: 1,
+    source_type: "selected_support",
+    target: {
+      support_model: it.support_model ?? null,
+      resistance_kn: resistance,
+    },
+    provenance: {
+      source_text: it.support_source ?? null,
+      data_status: it.support_status ?? null,
+    },
+    confirmed: false,
+  })
+
+  router.push({
+    path: "/calc",
+    query: {
+      m: "column",
+      ctx: "selected_support",
+    },
+  })
+}
+
 </script>
 
 <template>
@@ -106,7 +138,7 @@ const paramRows = (it) => [
             size="small"
             type="primary"
             plain
-            @click="router.push('/calc?m=column')"
+            @click="goColumnDesign(it)"
           >
             进入立柱设计
           </el-button>
@@ -133,7 +165,7 @@ const paramRows = (it) => [
 
       <p style="margin: 4px 0; color: #909399"><b>主要差异：</b></p>
       <p v-for="d in it.diffs" :key="d" style="margin: 2px 0; color: #909399">· {{ d }}</p>
-      <p style="margin: 4px 0 0; color: #67c23a">依据：{{ it.source }}</p>
+      <p style="margin: 4px 0 0; color: #67c23a">依据：{{ it.support_source || it.source || '—' }}</p>
     </el-card>
   </template>
 </template>

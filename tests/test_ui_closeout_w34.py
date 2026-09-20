@@ -13,7 +13,10 @@ def test_result_enters_new_column_design():
     )
 
     assert "进入立柱设计" in s
-    assert "/calc?m=column" in s
+    assert "goColumnDesign(it)" in s
+    assert 'path: "/calc"' in s
+    assert 'm: "column"' in s
+    assert 'ctx: "selected_support"' in s
 
     assert (
         "router.push('/modify')"
