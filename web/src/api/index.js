@@ -118,6 +118,11 @@ export const getCalculationRecords = (params = {}) =>
 export const getCalculationRecord = (recordId) =>
   http.get(`/api/calc/records/${recordId}`)
 
+
+// W35-D7-C: Formula Registry 只读详情
+export const getFormula = (formulaId) =>
+  http.get(`/api/formulas/${formulaId}`)
+
 // W34-D6: 数据质量中心
 export const getDataQuality = () =>
   http.get('/api/supports/quality')

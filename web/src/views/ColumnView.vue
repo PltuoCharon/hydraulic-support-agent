@@ -427,7 +427,8 @@
                       v-for="formulaId in recordDetail.formula_ids"
                       :key="formulaId"
                       type="info"
-                      style="margin-right: 6px"
+                      style="margin-right: 6px; cursor: pointer"
+                      @click="openFormulaDetail(formulaId)"
                     >
                       {{ formulaId }}
                     </el-tag>
@@ -451,6 +452,81 @@
               </template>
             </div>
           </el-drawer>
+
+          <el-dialog
+            v-model="formulaDialogOpen"
+            title="Formula Registry 详情"
+            width="720px"
+          >
+            <div v-loading="formulaDetailLoading">
+              <template v-if="formulaDetail">
+                <el-descriptions
+                  :column="2"
+                  border
+                >
+                  <el-descriptions-item label="Formula ID">
+                    {{ formulaDetail.formula_id }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="名称">
+                    {{ formulaDetail.name }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="模块">
+                    {{ formulaDetail.module }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="状态">
+                    {{ formulaDetail.status }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item
+                    label="公式"
+                    :span="2"
+                  >
+                    {{ formulaDetail.formula }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="输入变量">
+                    {{ formulaDetail.input_vars || "—" }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="输出">
+                    {{ formulaDetail.output || "—" }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="单位">
+                    {{ formulaDetail.unit || "—" }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item label="当前调用位置">
+                    {{ formulaDetail.current_callers || "—" }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item
+                    label="来源登记"
+                    :span="2"
+                  >
+                    {{ formulaDetail.source || "—" }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item
+                    label="验证记录"
+                    :span="2"
+                  >
+                    {{ formulaDetail.verification || "—" }}
+                  </el-descriptions-item>
+
+                  <el-descriptions-item
+                    label="备注"
+                    :span="2"
+                  >
+                    {{ formulaDetail.notes || "—" }}
+                  </el-descriptions-item>
+                </el-descriptions>
+              </template>
+            </div>
+          </el-dialog>
         </el-card>
 
       </el-tab-pane>
@@ -817,6 +893,7 @@ import { useRoute } from 'vue-router'
 import {
   getCalculationRecord,
   getCalculationRecords,
+  getFormula,
   postColumnDesign,
   postColumnStrength,
 } from '../api'
@@ -866,6 +943,10 @@ const recordListLoading = ref(false)
 const recordDrawerOpen = ref(false)
 const recordDetailLoading = ref(false)
 const recordDetail = ref(null)
+
+const formulaDialogOpen = ref(false)
+const formulaDetailLoading = ref(false)
+const formulaDetail = ref(null)
 
 const designForm = reactive({
   p_kn:
@@ -937,6 +1018,21 @@ const openRecordDetail = async (recordId) => {
     // 全局 Axios 拦截器统一提示。
   } finally {
     recordDetailLoading.value = false
+  }
+}
+
+
+const openFormulaDetail = async (formulaId) => {
+  formulaDialogOpen.value = true
+  formulaDetailLoading.value = true
+  formulaDetail.value = null
+
+  try {
+    formulaDetail.value = await getFormula(formulaId)
+  } catch (e) {
+    // 全局 Axios 拦截器统一提示。
+  } finally {
+    formulaDetailLoading.value = false
   }
 }
 
