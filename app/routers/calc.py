@@ -26,7 +26,10 @@ from app.services.calc.column_strength import (
 )
 
 from app.services.calculation_records import (
+    CalculationRecordDataError,
     create_calculation_record,
+    get_calculation_record,
+    list_calculation_records,
     normalize_context,
 )
 
@@ -143,6 +146,67 @@ def column_design(req: ColumnDesignReq):
         return {"code": 0, "data": data}
 
     except ValueError as e:
+        return {"code": 1, "msg": str(e)}
+
+
+# ============================================================
+# W35-D6：计算记录只读查询
+# ============================================================
+
+def _serialize_calculation_record(record):
+    if record is None:
+        return None
+
+    data = dict(record)
+    created_at = data.get("created_at")
+
+    if created_at is not None:
+        if not hasattr(created_at, "isoformat"):
+            raise CalculationRecordDataError(
+                "invalid created_at in calculation record"
+            )
+        data["created_at"] = created_at.isoformat()
+
+    return data
+
+
+@router.get("/records")
+def calculation_records(
+    calc_type: str = "column_design",
+    limit: int = 20,
+):
+    try:
+        rows = list_calculation_records(
+            calc_type=calc_type,
+            limit=limit,
+        )
+        return {
+            "code": 0,
+            "data": [
+                _serialize_calculation_record(row)
+                for row in rows
+            ],
+        }
+    except (ValueError, CalculationRecordDataError) as e:
+        return {"code": 1, "msg": str(e)}
+
+
+@router.get("/records/{record_id}")
+def calculation_record_detail(record_id: int):
+    try:
+        row = get_calculation_record(record_id)
+
+        if row is None:
+            return {
+                "code": 1,
+                "msg": "calculation record not found",
+            }
+
+        return {
+            "code": 0,
+            "data": _serialize_calculation_record(row),
+        }
+    except (ValueError, CalculationRecordDataError) as e:
         return {"code": 1, "msg": str(e)}
 
 

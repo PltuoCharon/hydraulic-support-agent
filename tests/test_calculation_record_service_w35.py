@@ -23,7 +23,7 @@ def test_example_does_not_claim_engineering_provenance():
     )
     assert source is None
     assert confirmed is None
-    assert snapshot == {"target": {"resistance_kn": 2533}}
+    assert snapshot is None
 
 
 def test_confirmed_selected_support_is_preserved_when_value_matches():
@@ -75,3 +75,21 @@ def test_unconfirmed_transferred_context_is_rejected():
             context_confirmed=False,
             context_snapshot={"target": {"resistance_kn": 5000}},
         )
+
+
+def test_direct_user_input_drops_fake_upstream_snapshot():
+    source, confirmed, snapshot = normalize_context(
+        p_kn=3000,
+        run_mode="engineering",
+        context_source_type="user_input",
+        context_confirmed=True,
+        context_snapshot={
+            "target": {
+                "support_model": "FAKE",
+                "resistance_kn": 3000,
+            }
+        },
+    )
+    assert source == "user_input"
+    assert confirmed is None
+    assert snapshot is None
