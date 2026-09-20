@@ -35,6 +35,11 @@ def test_successful_design_refreshes_record_list():
     assert "loadRecentRecords()" in s
 
 
+def test_unknown_context_source_is_not_silently_reinterpreted():
+    s = VIEW.read_text(encoding="utf-8")
+    assert "return map[value] || value || '无上游上下文'" in s
+
+
 def test_d6_ui_does_not_add_record_mutation_actions():
     s = VIEW.read_text(encoding="utf-8")
     assert "deleteCalculationRecord" not in s

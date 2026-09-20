@@ -896,7 +896,7 @@ const formatContextSource = (value) => {
     calculated_requirement: '需求计算',
     user_input: '用户输入',
   }
-  return map[value] || '无上游上下文'
+  return map[value] || value || '无上游上下文'
 }
 
 const formatConfirmed = (value) => {
