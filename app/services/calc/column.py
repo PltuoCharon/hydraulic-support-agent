@@ -2,7 +2,7 @@
 
 公式: P = n * (pi/4) * D^2 * p * eta  =>  D = sqrt(4P / (n*pi*p*eta))
 标准缸径系列: GB/T 2348 液压缸内径系列
-初撑力比校核: 初撑力/工作阻力 60%~85%(W35-D2 已核标准证据)
+初撑力比校核: 初撑力/额定工作阻力 60%~85%(W35-D2 已核标准证据)
 诚实边界: 参数化设计计算与校核, 不生成结构设计图样
 """
 import math
@@ -45,9 +45,9 @@ def round_up_bore(d_mm):
 
 
 def setting_ratio(p_set_kn, p_rated_kn):
-    """初撑力比校核: 返回 (比值%, 是否合格), 合格区间 60%~85%"""
+    """初撑力/额定工作阻力比校核: 返回 (比值%, 是否合格), 合格区间 60%~85%"""
     if p_rated_kn <= 0:
-        raise ValueError("工作阻力必须为正")
+        raise ValueError("额定工作阻力必须为正")
     ratio = round(p_set_kn / p_rated_kn * 100, 1)
     return ratio, 60.0 <= ratio <= 85.0
 
@@ -65,8 +65,8 @@ def design(p_kn, n, p_mpa, eta, p_set_kn=None):
         "source": SOURCE,
     }
     if p_set_kn is not None:
-        ratio, ok = setting_ratio(p_set_kn, p_actual)
+        ratio, ok = setting_ratio(p_set_kn, p_kn)
         out["setting_ratio_pct"] = ratio
         out["setting_ok"] = ok
-        out["rule"] = "初撑力/工作阻力校核区间 60%~85%（W35-D2 已核标准证据）"
+        out["rule"] = "初撑力/额定工作阻力校核区间 60%~85%（W35-D2 已核标准证据）"
     return out

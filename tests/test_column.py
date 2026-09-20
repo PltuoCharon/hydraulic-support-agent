@@ -51,3 +51,24 @@ def test_invalid_input_raises():
         bore_diameter(10, 1, 31.5, eta=1.0)
     with pytest.raises(ValueError):
         column_force(320, 100)
+
+
+def test_design_setting_ratio_uses_requested_working_resistance_not_rounded_capacity():
+    result = design(
+        3000,
+        1,
+        31.5,
+        eta=1.0,
+        p_set_kn=2400,
+    )
+
+    assert result["d_std_mm"] == 360
+    assert result["p_actual_kn"] == pytest.approx(
+        3206.3,
+        abs=0.5,
+    )
+    assert result["setting_ratio_pct"] == pytest.approx(
+        80.0,
+        abs=0.1,
+    )
+    assert "额定工作阻力" in result["rule"]

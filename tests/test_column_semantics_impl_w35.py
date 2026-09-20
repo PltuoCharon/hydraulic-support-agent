@@ -67,3 +67,5 @@ def test_formula_registry_records_d5_column_evidence_boundaries():
     f3 = rows["F-COL-003"]
     assert "W35-D2\u5df2\u6838\u6807\u51c6\u8bc1\u636e" in f3["source"]
     assert "60%~85%" in f3["verification"]
+    assert "P_rated在column_design中映射为p_kn" in f3["notes"]
+    assert "不得使用p_actual_kn作为分母" in f3["notes"]

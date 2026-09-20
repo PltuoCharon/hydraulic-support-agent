@@ -5,7 +5,7 @@ F-QN-003,q_need,p3统计回归法,active,"Ps=72.3Hm+4.5Lp+78.9Bc-10.24N-62.1","H
 F-QN-004,q_need,需求支护强度控制值,active,"q_need=max(p1,p2,p3)","p1;p2;p3",q_need,MPa,"程序决策规则","谢桥0.90","app/services/calc/q_need.py","不是工作阻力"
 F-COL-001,column,立柱理论缸径反算,active,"D=sqrt(4P*1000/(n*pi*p*eta))","P;n;p;eta",D,mm,"项目立柱参数化计算关系；GB/T 2348仅用于标准缸径系列","2533kN,n=1,p=31.5MPa,eta=1.0→320mm","app/services/calc/column.py","eta为历史立柱修正系数(物理口径待核)；eta须显式输入；不得等同Ks"
 F-COL-002,column,单柱推力,active,"F=p*pi*D^2/4/1000","D;p",F,kN,"液压缸受压面积基本关系","320mm@31.5MPa≈2533.4kN","app/services/calc/column.py;core/support.py","公式本身不含eta；整架圆整后计算承载力另按n与显式eta组合"
-F-COL-003,column,初撑力比,active,"r=P_set/P_rated","P_set;P_rated",r,-,"W35-D2已核标准证据","校核区间60%~85%；基准75%","app/services/calc/column.py","p_set_kn仅显式输入时校核；不自动补齐"
+F-COL-003,column,初撑力比,active,"r=P_set/P_rated","P_set;P_rated",r,-,"W35-D2已核标准证据","校核区间60%~85%；基准75%","app/services/calc/column.py","p_set_kn仅显式输入时校核；不自动补齐；P_rated在column_design中映射为p_kn；不得使用p_actual_kn作为分母"
 F-STR-001,column_strength,材料许用应力,active,"sigma_allow=sigma_s/n","sigma_s;n",sigma_allow,MPa,"W33-D4当前口径","835/2=417.5","app/services/calc/column_strength.py","材料口径仍需后续标准核定"
 F-STR-002,column_strength,薄壁缸筒壁厚,active,"delta=pD/(2[sigma])","p;D;sigma_allow",delta,mm,"吕晶霞等","D200,p43.4→10.40","app/services/calc/column_strength.py","适用delta/D<=0.08"
 F-STR-003,column_strength,中壁缸筒壁厚,active,"delta=pD/(2.3[sigma]-3p)","p;D;sigma_allow",delta,mm,"W33-D4来源","构造例","app/services/calc/column_strength.py","公式验证构造例"
