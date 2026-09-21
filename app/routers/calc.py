@@ -16,6 +16,9 @@ from pydantic import BaseModel, Field
 
 from app.services.calc.q_need import estimate
 from app.services.calc.column import design as column_design_core
+from app.services.calc.push_jack import (
+    push_jack_design as push_jack_design_core,
+)
 from app.services.calc.column_strength import (
     MATERIALS,
     SOURCE_WALL,
@@ -142,6 +145,50 @@ def column_design(req: ColumnDesignReq):
 
         data = dict(data)
         data["record_id"] = record_id
+
+        return {"code": 0, "data": data}
+
+    except ValueError as e:
+        return {"code": 1, "msg": str(e)}
+
+
+# ============================================================
+# W36-D4：推移千斤顶参数设计
+# ============================================================
+
+class PushJackDesignReq(BaseModel):
+    push_required_kn: float = Field(
+        ...,
+        description="无杆腔推力设计需求 kN",
+    )
+    pressure_mpa: float = Field(
+        ...,
+        description="显式工作压力 MPa",
+    )
+    rod_mm: Optional[float] = Field(
+        None,
+        description="活塞杆直径 mm；为空则不计算杆腔拉力",
+    )
+    pull_required_kn: Optional[float] = Field(
+        None,
+        description="杆腔拉力校核需求 kN",
+    )
+    stroke_mm: Optional[float] = Field(
+        None,
+        description="行程 mm；仅作为显式工程输入保存",
+    )
+
+
+@router.post("/push-jack-design")
+def push_jack_design(req: PushJackDesignReq):
+    try:
+        data = push_jack_design_core(
+            push_required_kn=req.push_required_kn,
+            pressure_mpa=req.pressure_mpa,
+            rod_mm=req.rod_mm,
+            pull_required_kn=req.pull_required_kn,
+            stroke_mm=req.stroke_mm,
+        )
 
         return {"code": 0, "data": data}
 
