@@ -55,7 +55,7 @@ Browser
 
 访问：
 
-/calc?m=jack
+/#/calc?m=jack
 
 显式输入：
 

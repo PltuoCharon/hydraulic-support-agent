@@ -37,6 +37,7 @@
           >
             <el-form-item label="无杆腔推力需求">
               <el-input-number
+                data-testid="jack-push-required"
                 v-model="form.push_required_kn"
                 :min="0"
                 :step="10"
@@ -48,6 +49,7 @@
 
             <el-form-item label="工作压力">
               <el-input-number
+                data-testid="jack-pressure"
                 v-model="form.pressure_mpa"
                 :min="0"
                 :step="0.5"
@@ -104,6 +106,7 @@
 
             <el-form-item>
               <el-button
+                data-testid="jack-calculate"
                 type="primary"
                 :loading="loading"
                 :disabled="!ready"
@@ -122,6 +125,7 @@
       <el-col :xs="24" :lg="14">
         <el-card
           v-if="result"
+          data-testid="jack-result"
           shadow="never"
         >
           <template #header>
@@ -137,7 +141,7 @@
             </el-descriptions-item>
 
             <el-descriptions-item label="候选缸径">
-              <b>{{ result.bore_candidate_mm }}</b> mm
+              <b data-testid="jack-bore-candidate">{{ result.bore_candidate_mm }}</b> mm
             </el-descriptions-item>
 
             <el-descriptions-item label="实际无杆腔推力">
@@ -145,8 +149,11 @@
             </el-descriptions-item>
 
             <el-descriptions-item label="推力需求校核">
-              <el-tag :type="result.push_ok ? success : danger">
-                {{ result.push_ok ? 满足 : 不满足 }}
+              <el-tag
+                data-testid="jack-push-check"
+                :type="result.push_ok ? 'success' : 'danger'"
+              >
+                {{ result.push_ok ? '满足' : '不满足' }}
               </el-tag>
             </el-descriptions-item>
 
@@ -166,8 +173,8 @@
               </el-descriptions-item>
 
               <el-descriptions-item label="拉力需求校核">
-                <el-tag :type="result.pull_ok ? success : danger">
-                  {{ result.pull_ok ? 满足 : 不满足 }}
+                <el-tag :type="result.pull_ok ? 'success' : 'danger'">
+                  {{ result.pull_ok ? '满足' : '不满足' }}
                 </el-tag>
               </el-descriptions-item>
             </template>

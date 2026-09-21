@@ -34,6 +34,7 @@ def test_jack_benchmark_is_frozen():
     assert "pressure_mpa = 31.5" in s
     assert "候选缸径显示 125 mm" in s
     assert "推力需求校核显示“满足”" in s
+    assert "/#/calc?m=jack" in s
 
 
 def test_test_pressure_is_not_product_default():

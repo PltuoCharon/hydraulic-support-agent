@@ -1,0 +1,13 @@
+# W36.5-D3 Data Recovery SHA256 Manifest
+
+这些文件保留在本地 artifacts/data_recovery/w34d6，artifacts 已作为本地工作目录加入 .gitignore。
+
+本清单记录 W36.5-D3 收口时关键数据恢复资产的 SHA256，用于完整性核对；清单进入 Git，不代表恢复文件本体进入 Git。
+
+```text
+d007e8b25d129a1b2853fb25c06d84fb458d376cd3fa0a1bc9d819837a582e15  artifacts/data_recovery/w34d6/intensity_missing.tsv
+4f051977c823643877056194e6447f59ed0adc422c8e6f8e6439bb21f050c6c5  artifacts/data_recovery/w34d6/manufacturer_missing.tsv
+64bfe9e548073ebc46f57151924ac195af2994bf979d2051ec75ec1f86c24c8b  artifacts/data_recovery/w34d6/support_models_after_recovery.sql
+3bf7620250ee2409e9222b029e3b8c7dc7b4bbf7ab65358113a4f8b9cea8651e  artifacts/data_recovery/w34d6/support_models_before_batch1.sql
+ecff32924b1371fa2b775a1415b6fe286a3c5978e4109307eda9468fcbdff29e  artifacts/data_recovery/w34d6/type_missing.tsv
+```
