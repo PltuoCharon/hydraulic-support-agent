@@ -5,22 +5,31 @@
 初撑力比校核: 初撑力/额定工作阻力 60%~85%(W35-D2 已核标准证据)
 诚实边界: 参数化设计计算与校核, 不生成结构设计图样
 """
-import math
-
-# GB/T 2348 液压缸缸径系列(常用段, mm)
-STANDARD_BORES = [40, 50, 63, 80, 100, 125, 140, 160, 180, 200,
-                  220, 250, 280, 320, 360, 400, 450, 500]
+from app.services.calc.hydraulic_cylinder import (
+    STANDARD_BORES,
+    bore_for_push_force,
+    push_force,
+    round_up_standard_bore,
+)
 
 SOURCE = ("标准缸径系列: GB/T 2348; " "计算关系: 项目立柱参数化计算式 P=n*(pi/4)*D^2*p*eta; " "eta: 历史立柱修正系数，物理口径待核")
 
 
 def column_force(d_mm, p_mpa):
-    """正算单柱推力(kN): P = (pi/4)*D^2*p"""
+    """兼容入口：正算单柱推力(kN)。"""
     if not 40 <= d_mm <= 500:
-        raise ValueError(f"缸径 {d_mm}mm 超出系列范围 40~500mm")
+        raise ValueError(
+            f"缸径 {d_mm}mm 超出系列范围 40~500mm"
+        )
     if not 5 <= p_mpa <= 50:
-        raise ValueError(f"立柱工作压力 {p_mpa}MPa 超出常见范围 5~50MPa")
-    return round(math.pi / 4 * d_mm**2 * p_mpa / 1000, 1)
+        raise ValueError(
+            f"立柱工作压力 {p_mpa}MPa 超出常见范围 5~50MPa"
+        )
+
+    return round(
+        push_force(d_mm, p_mpa),
+        1,
+    )
 
 
 def bore_diameter(p_kn, n, p_mpa, eta):
@@ -33,15 +42,19 @@ def bore_diameter(p_kn, n, p_mpa, eta):
         raise ValueError(f"立柱工作压力 {p_mpa}MPa 超出常见范围 5~50MPa")
     if not 0.8 <= eta <= 1.0:
         raise ValueError(f"历史立柱修正系数 eta={eta} 超出当前接口允许范围 0.8~1.0")
-    return round(math.sqrt(4 * p_kn * 1000 / (n * math.pi * p_mpa * eta)), 1)
+    single_force_kn = p_kn / (n * eta)
+    return round(
+        bore_for_push_force(
+            single_force_kn,
+            p_mpa,
+        ),
+        1,
+    )
 
 
 def round_up_bore(d_mm):
-    """向上圆整到标准缸径系列"""
-    for s in STANDARD_BORES:
-        if s >= d_mm:
-            return s
-    raise ValueError(f"缸径 {d_mm}mm 超出标准系列上限 {STANDARD_BORES[-1]}mm")
+    """兼容入口：向上圆整到标准缸径系列。"""
+    return round_up_standard_bore(d_mm)
 
 
 def setting_ratio(p_set_kn, p_rated_kn):
