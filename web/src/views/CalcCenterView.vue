@@ -3,7 +3,7 @@
     <PageHeader
       eyebrow="Engineering Calculation"
       title="设计计算"
-      description="围绕支护需求、立柱参数和强度校核进行可追溯的参数化工程计算。"
+      description="围绕支护需求、立柱与千斤顶参数进行参数化工程计算与校核。"
     >
       <StatusBadge
         label="参数化设计辅助"
@@ -65,6 +65,10 @@
         v-else-if="mod === 'column'"
       />
 
+      <JackView
+        v-else-if="mod === 'jack'"
+      />
+
       <EmptyState
         v-else
         title="该计算模块尚未开放"
@@ -87,6 +91,7 @@ import {
 
 import QNeedView from './QNeedView.vue'
 import ColumnView from './ColumnView.vue'
+import JackView from './JackView.vue'
 
 import PageHeader from '../components/ui/PageHeader.vue'
 import StatusBadge from '../components/ui/StatusBadge.vue'
@@ -100,6 +105,7 @@ const router = useRouter()
 const validModules = [
   'qneed',
   'column',
+  'jack',
 ]
 
 
@@ -131,8 +137,7 @@ const modules = [
     index: '03',
     key: 'jack',
     label: '千斤顶设计',
-    description: '推移与调架执行元件',
-    disabled: true,
+    description: '推移千斤顶参数设计与校核',
   },
   {
     index: '04',

@@ -110,6 +110,10 @@ export const postColumnDesign = (data) =>
 export const postColumnStrength = (data) =>
   http.post('/api/calc/column-strength', data)
 
+// W36-D4: 推移千斤顶参数设计
+export const postPushJackDesign = (data) =>
+  http.post('/api/calc/push-jack-design', data)
+
 
 // W35-D6: 计算记录只读查询
 export const getCalculationRecords = (params = {}) =>
