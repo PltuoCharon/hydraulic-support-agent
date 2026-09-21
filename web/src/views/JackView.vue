@@ -209,6 +209,44 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <el-card
+      shadow="never"
+      class="basis-card"
+    >
+      <template #header>
+        <b>计算依据与边界</b>
+      </template>
+
+      <el-descriptions
+        :column="1"
+        border
+      >
+        <el-descriptions-item label="推力 / 拉力">
+          当前结果为压力-面积关系得到的理论计算值，
+          未引入液压效率修正。
+        </el-descriptions-item>
+
+        <el-descriptions-item label="候选缸径">
+          按项目当前已录入的 GB/T 2348
+          常用缸径列表向上选择。
+        </el-descriptions-item>
+
+        <el-descriptions-item label="MT/T94">
+          当前候选缸径不等于 MT/T94 合规判定；
+          千斤顶缸径与活塞杆径完整系列仍待独立核验。
+        </el-descriptions-item>
+
+        <el-descriptions-item label="行程">
+          stroke_mm 为用户输入，
+          不参与本阶段力学反算。
+        </el-descriptions-item>
+
+        <el-descriptions-item label="动作方向">
+          本阶段不自动推断推输送机和移架对应的油腔方向。
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-card>
   </div>
 </template>
 
@@ -216,6 +254,7 @@
 import {
   computed,
   ref,
+  watch,
 } from 'vue'
 
 import {
@@ -233,6 +272,18 @@ const form = ref({
 
 const loading = ref(false)
 const result = ref(null)
+
+let inputVersion = 0
+let requestVersion = 0
+
+watch(
+  form,
+  () => {
+    inputVersion += 1
+    result.value = null
+  },
+  { deep: true },
+)
 
 
 const pullNeedsRod = computed(() =>
@@ -272,17 +323,32 @@ const runDesign = async () => {
     payload.stroke_mm = form.value.stroke_mm
   }
 
+  const requestInputVersion = inputVersion
+  const currentRequest = ++requestVersion
+
+  result.value = null
   loading.value = true
 
   try {
-    result.value = await postPushJackDesign(payload)
+    const nextResult = await postPushJackDesign(payload)
+
+    if (
+      currentRequest === requestVersion
+      && requestInputVersion === inputVersion
+    ) {
+      result.value = nextResult
+    }
   } finally {
-    loading.value = false
+    if (currentRequest === requestVersion) {
+      loading.value = false
+    }
   }
 }
 
 
 const clearResult = () => {
+  requestVersion += 1
+  loading.value = false
   result.value = null
 }
 </script>
@@ -317,6 +383,10 @@ const clearResult = () => {
 
 .standard-alert {
   margin-top: 18px;
+}
+
+.basis-card {
+  margin-top: 2px;
 }
 
 .unit {
