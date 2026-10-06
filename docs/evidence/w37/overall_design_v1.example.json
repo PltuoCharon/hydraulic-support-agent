@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "metadata": {
+    "design_name": "example",
+    "design_id": null
+  },
+  "working_condition": {},
+  "reference_support": {},
+  "support_requirement": {},
+  "overall_parameters": {},
+  "hydraulic_components": {
+    "columns": null,
+    "push_jack": null,
+    "valve": {
+      "status": "NOT_IMPLEMENTED"
+    },
+    "pipeline": {
+      "status": "NOT_IMPLEMENTED"
+    },
+    "pump_station": {
+      "status": "NOT_IMPLEMENTED"
+    }
+  },
+  "linkage": {
+    "status": "NOT_IMPLEMENTED"
+  },
+  "structure": {
+    "status": "NOT_IMPLEMENTED"
+  },
+  "analyses": {
+    "status": "NOT_IMPLEMENTED"
+  },
+  "provenance": {},
+  "status": "PARTIAL"
+}
