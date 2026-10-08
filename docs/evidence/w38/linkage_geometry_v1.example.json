@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "status": "PARTIAL",
+  "coordinate_system": {
+    "plane": "LONGITUDINAL_SIDE_VIEW_2D",
+    "origin_anchor": "rear_link_base",
+    "x_positive": "FRONT_COAL_WALL_SIDE",
+    "y_positive": "UP",
+    "linear_unit": "mm",
+    "angle_unit": "degree"
+  },
+  "design_boundaries": {
+    "operating_height_min_mm": null,
+    "operating_height_max_mm": null,
+    "beam_tip_horizontal_displacement_limit_mm": {
+      "value": 80,
+      "unit": "mm",
+      "origin": "RETRIEVED",
+      "evidence_status": "VERIFIED",
+      "source_text": "MT/T 556-1996 4.6.4",
+      "note": "four-bar mechanism operating-height validation constraint"
+    }
+  },
+  "fixed_geometry": {
+    "rear_link_base": {
+      "x_mm": 0,
+      "y_mm": 0,
+      "coordinate_role": "NORMALIZED_ORIGIN"
+    },
+    "front_link_base": null
+  },
+  "reference_pose": null,
+  "derived_geometry": {
+    "base_pivot_spacing_mm": null,
+    "rear_link_length_mm": null,
+    "front_link_length_mm": null,
+    "shield_beam_effective_length_mm": null
+  },
+  "top_beam_interface": {
+    "shield_top_beam_pivot": null,
+    "beam_tip_reference_point": null
+  },
+  "pose_results": [],
+  "trajectory_results": null,
+  "validation_results": null,
+  "provenance": {
+    "source_texts": [],
+    "notes": []
+  }
+}
