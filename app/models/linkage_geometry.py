@@ -233,3 +233,38 @@ def serialize_linkage_geometry(
     """Serialize hs.linkageGeometry.v1 to a JSON-compatible dict."""
 
     return geometry.model_dump(mode="json")
+
+
+SideClassification = Literal[
+    "POSITIVE",
+    "NEGATIVE",
+    "ON_BASE_LINE",
+]
+
+
+AssemblySideSignature = Literal[
+    "SAME_SIDE",
+    "OPPOSITE_SIDE",
+    "DEGENERATE",
+]
+
+
+class ReferencePoseAnalysis(StrictModel):
+    """W38-D5 deterministic analysis of one explicit reference pose."""
+
+    rear_link_angle_deg: DegreeParameter | None = None
+    front_link_angle_deg: DegreeParameter | None = None
+    shield_beam_angle_deg: DegreeParameter | None = None
+
+    rear_link_shield_side: SideClassification
+    front_link_shield_side: SideClassification
+
+    assembly_side_signature: AssemblySideSignature
+
+    geometry_degenerate: bool = False
+
+    degeneracy_reasons: list[str] = Field(
+        default_factory=list
+    )
+
+    note: str | None = None
