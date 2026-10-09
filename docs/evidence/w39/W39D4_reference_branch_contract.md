@@ -449,4 +449,3 @@ D5 shall focus on integration and regression behavior.
 
 It shall not change D3 circle-intersection mathematics merely to make an
 engineering example pass.
-
