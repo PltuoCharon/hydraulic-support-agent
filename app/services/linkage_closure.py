@@ -464,3 +464,238 @@ def solve_closure_candidates(
             branch_resolution="NONE",
         ),
     )
+
+
+# ============================================================
+# W39-D4: reference-branch engineering resolution
+# ============================================================
+
+
+def _finite_reference_coordinate(
+    value: float,
+    *,
+    name: str,
+) -> float:
+    """Reject invalid explicit reference geometry."""
+
+    from math import isfinite
+
+    if not isfinite(value):
+        raise ValueError(
+            f"{name} must be finite"
+        )
+
+    return value
+
+
+def derive_reference_branch(
+    *,
+    reference_b: EngineeringPoint2D,
+    reference_c: EngineeringPoint2D,
+    front_link_base: EngineeringPoint2D,
+    tolerance: NumericalTolerance,
+):
+    """Derive W39 branch from explicit reference B/C/D geometry.
+
+    Returns:
+        "POSITIVE", "NEGATIVE", or None when the reference
+        geometry cannot distinguish a non-degenerate branch.
+    """
+
+    bx = _finite_reference_coordinate(
+        reference_b.x_mm.value,
+        name="reference_b.x_mm",
+    )
+    by = _finite_reference_coordinate(
+        reference_b.y_mm.value,
+        name="reference_b.y_mm",
+    )
+
+    cx = _finite_reference_coordinate(
+        reference_c.x_mm.value,
+        name="reference_c.x_mm",
+    )
+    cy = _finite_reference_coordinate(
+        reference_c.y_mm.value,
+        name="reference_c.y_mm",
+    )
+
+    dx = _finite_reference_coordinate(
+        front_link_base.x_mm.value,
+        name="front_link_base.x_mm",
+    )
+    dy = _finite_reference_coordinate(
+        front_link_base.y_mm.value,
+        name="front_link_base.y_mm",
+    )
+
+    bd_x = dx - bx
+    bd_y = dy - by
+
+    q = hypot(
+        bd_x,
+        bd_y,
+    )
+
+    bc = hypot(
+        cx - bx,
+        cy - by,
+    )
+
+    center_tolerance_mm = (
+        _effective_distance_tolerance(
+            tolerance,
+            q,
+            bc,
+        )
+    )
+
+    if q <= center_tolerance_mm:
+        return None
+
+    cross_mm2 = (
+        bd_x * (cy - by)
+        - bd_y * (cx - bx)
+    )
+
+    signed_distance_mm = (
+        cross_mm2 / q
+    )
+
+    branch_tolerance_mm = (
+        _effective_distance_tolerance(
+            tolerance,
+            q,
+            bc,
+            abs(signed_distance_mm),
+        )
+    )
+
+    if (
+        signed_distance_mm
+        > branch_tolerance_mm
+    ):
+        return "POSITIVE"
+
+    if (
+        signed_distance_mm
+        < -branch_tolerance_mm
+    ):
+        return "NEGATIVE"
+
+    return None
+
+
+def resolve_reference_branch(
+    *,
+    task: ClosureSolverInput,
+    result: ClosureResult,
+) -> ClosureResult:
+    """Resolve a D3 TWO_SOLUTIONS result by explicit branch semantics.
+
+    This function does not recalculate four-bar closure geometry.
+    """
+
+    # Non-two-solution states already have complete mathematical
+    # semantics from D3. Return a distinct copy without changing them.
+    if result.closure_state != "TWO_SOLUTIONS":
+        return result.model_copy(
+            deep=True
+        )
+
+    # D4 expects the untouched mathematical result produced by D3.
+    if (
+        result.selection_status
+        != "BRANCH_AMBIGUOUS"
+        or result.selected_pose is not None
+        or (
+            result.provenance.branch_resolution
+            != "NONE"
+        )
+    ):
+        raise ValueError(
+            "D4 expects an unresolved D3 TWO_SOLUTIONS result"
+        )
+
+    reference_branch = (
+        task.reference_branch
+    )
+
+    if reference_branch is None:
+        return result.model_copy(
+            deep=True
+        )
+
+    selected_candidate = None
+
+    for candidate in result.candidates:
+        if (
+            candidate.branch
+            == reference_branch
+        ):
+            selected_candidate = candidate
+            break
+
+    if selected_candidate is None:
+        raise ValueError(
+            "requested reference branch is absent "
+            "from closure candidates"
+        )
+
+    selected_pose = ClosureSelectedPose(
+        rear_link_shield=(
+            result.rear_link_shield
+        ),
+        front_link_shield=(
+            selected_candidate.point_c
+        ),
+        rear_link_angle_deg=(
+            task.rear_link_angle_deg
+        ),
+        branch=selected_candidate.branch,
+    )
+
+    payload = result.model_dump(
+        mode="python"
+    )
+
+    payload["selection_status"] = (
+        "SELECTED"
+    )
+
+    payload["selected_pose"] = (
+        selected_pose.model_dump(
+            mode="python"
+        )
+    )
+
+    provenance = dict(
+        payload["provenance"]
+    )
+
+    provenance["branch_resolution"] = (
+        "REFERENCE_POSE"
+    )
+
+    payload["provenance"] = provenance
+
+    return ClosureResult.model_validate(
+        payload
+    )
+
+
+def solve_closure(
+    task: ClosureSolverInput,
+) -> ClosureResult:
+    """Run D3 mathematical closure once, then apply D4 resolution."""
+
+    mathematical_result = (
+        solve_closure_candidates(
+            task
+        )
+    )
+
+    return resolve_reference_branch(
+        task=task,
+        result=mathematical_result,
+    )
