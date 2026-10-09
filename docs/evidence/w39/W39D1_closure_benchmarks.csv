@@ -1,0 +1,8 @@
+case_id,benchmark_class,status,A_x_mm,A_y_mm,D_x_mm,D_y_mm,AB_mm,rear_link_angle_deg,BC_mm,CD_mm,expected_closure_state,engineering_verified,source_text,note
+SM-001,SYNTHETIC_MATH,READY,0,0,8,0,5,0,5,5,TWO_SOLUTIONS,false,W39-D1 synthetic math benchmark,Artificial geometry for two-circle intersection testing; not hydraulic-support design data.
+SM-002,SYNTHETIC_MATH,READY,0,0,8,0,5,0,1,2,TANGENT,false,W39-D1 synthetic math benchmark,"External tangency because B=(5,0), D=(8,0), q=3 and BC+CD=3."
+SM-003,SYNTHETIC_MATH,READY,0,0,8,0,5,0,1,1,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Separated circles because q=3 > BC+CD=2.
+SM-004,SYNTHETIC_MATH,READY,0,0,8,0,5,0,5,1,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Contained non-intersecting circles because q=3 < abs(BC-CD)=4.
+SM-005,SYNTHETIC_MATH,READY,0,0,5,0,5,0,2,2,DEGENERATE,false,W39-D1 synthetic math benchmark,Coincident centers and equal radii; infinitely many mathematical C points.
+SM-006,SYNTHETIC_MATH,READY,0,0,5,0,5,0,2,3,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Coincident centers with unequal radii.
+ER-001,ENGINEERING_REFERENCE,NOT_SOLVER_READY,,,,,,,,,,false,W38-D1 audited linkage literature/corpus,No engineering reference case currently has complete traceable A/B/C/D coordinates and branch information; do not fabricate missing geometry.
