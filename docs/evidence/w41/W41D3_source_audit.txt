@@ -1,0 +1,398 @@
+===== W41-D3 SOURCE AUDIT =====
+2026-10-11T12:22:18+08:00
+===== GIT HEAD =====
+999d7b48962f361b67520627bdfdc04a98113cde
+===== EXISTING FILES =====
+app/models/linkage_closure.py
+app/models/linkage_geometry.py
+app/models/linkage_motion.py
+app/models/linkage_top_beam.py
+app/models/overall_design.py
+app/services/linkage_closure.py
+app/services/linkage_closure_integration.py
+app/services/linkage_geometry.py
+app/services/linkage_motion.py
+app/services/linkage_pose.py
+app/services/linkage_top_beam.py
+app/services/overall_design_adapters.py
+app/services/overall_design_report.py
+===== GEOMETRY MODEL =====
+class EngineeringPoint2D(StrictModel):
+    """One provenance-aware engineering point in normalized coordinates."""
+
+    x_mm: MillimetreParameter
+    y_mm: MillimetreParameter
+
+    point_role: str | None = None
+    note: str | None = None
+
+
+class DesignBoundaries(StrictModel):
+    """External design/validation boundaries for the mechanism."""
+
+    operating_height_min_mm: MillimetreParameter | None = None
+    operating_height_max_mm: MillimetreParameter | None = None
+
+    beam_tip_horizontal_displacement_limit_mm: (
+        MillimetreParameter | None
+    ) = None
+
+
+class FixedGeometry(StrictModel):
+    """Fixed pivots of the four-bar mechanism."""
+
+    rear_link_base: NormalizedOriginPoint = Field(
+        default_factory=NormalizedOriginPoint
+    )
+
+    front_link_base: EngineeringPoint2D | None = None
+
+
+class ReferencePose(StrictModel):
+    """One explicit physical reference configuration."""
+
+    support_height_mm: MillimetreParameter
+
+    rear_link_shield: EngineeringPoint2D
+    front_link_shield: EngineeringPoint2D
+
+    note: str | None = None
+
+
+class DerivedGeometry(StrictModel):
+    """Geometry that will later be deterministically derived."""
+
+    base_pivot_spacing_mm: MillimetreParameter | None = None
+
+    rear_link_length_mm: MillimetreParameter | None = None
+    front_link_length_mm: MillimetreParameter | None = None
+
+    shield_beam_effective_length_mm: (
+        MillimetreParameter | None
+    ) = None
+
+
+class TopBeamInterface(StrictModel):
+    """Geometry outside the canonical four-bar closure."""
+
+    shield_top_beam_pivot: EngineeringPoint2D | None = None
+    beam_tip_reference_point: EngineeringPoint2D | None = None
+
+
+class PoseResult(StrictModel):
+    """Reserved deterministic kinematic pose result."""
+
+    support_height_mm: MillimetreParameter
+
+    rear_link_shield: EngineeringPoint2D
+    front_link_shield: EngineeringPoint2D
+
+    rear_link_angle_deg: DegreeParameter | None = None
+    front_link_angle_deg: DegreeParameter | None = None
+    shield_beam_angle_deg: DegreeParameter | None = None
+
+    top_beam_pose: dict[str, Any] | None = None
+
+    note: str | None = None
+
+
+class TrajectoryResults(StrictModel):
+    """Reserved deterministic trajectory result container."""
+
+    beam_tip_trajectory: list[EngineeringPoint2D] | None = None
+
+    beam_tip_horizontal_displacement_mm: (
+        MillimetreParameter | None
+    ) = None
+
+    shield_top_beam_joint_trajectory: (
+        list[EngineeringPoint2D] | None
+    ) = None
+
+    instantaneous_center_trajectory: (
+        list[EngineeringPoint2D] | None
+    ) = None
+
+
+class ValidationResults(StrictModel):
+    """Reserved mechanism-validation result container."""
+
+    geometry_closure_ok: bool | None = None
+    operating_height_range_ok: bool | None = None
+    beam_tip_displacement_ok: bool | None = None
+
+    interference_status: str | None = None
+
+    validation_notes: list[str] = Field(default_factory=list)
+
+
+class LinkageGeometry(StrictModel):
+    """Canonical hs.linkageGeometry.v1 application model."""
+
+    version: Literal[1] = 1
+    status: ModuleStatus = "PARTIAL"
+
+    coordinate_system: CoordinateSystem = Field(
+        default_factory=CoordinateSystem
+    )
+
+    design_boundaries: DesignBoundaries = Field(
+        default_factory=DesignBoundaries
+    )
+
+    fixed_geometry: FixedGeometry = Field(
+        default_factory=FixedGeometry
+    )
+
+    reference_pose: ReferencePose | None = None
+
+    derived_geometry: DerivedGeometry = Field(
+        default_factory=DerivedGeometry
+    )
+
+    top_beam_interface: TopBeamInterface = Field(
+        default_factory=TopBeamInterface
+    )
+
+    pose_results: list[PoseResult] = Field(default_factory=list)
+
+    trajectory_results: TrajectoryResults | None = None
+    validation_results: ValidationResults | None = None
+
+    provenance: DesignProvenance = Field(
+        default_factory=DesignProvenance
+    )
+
+===== CLOSURE INPUT MODEL =====
+    )
+
+
+class ClosureSolverInput(StrictModel):
+    """Explicit input for one hs.linkageClosure.v1 solver task."""
+
+    version: Literal[1] = 1
+
+    rear_link_base: NormalizedOriginPoint = Field(
+        default_factory=NormalizedOriginPoint
+    )
+
+    front_link_base: EngineeringPoint2D
+
+    rear_link_length_mm: MillimetreParameter
+    shield_beam_effective_length_mm: MillimetreParameter
+    front_link_length_mm: MillimetreParameter
+    base_pivot_spacing_mm: MillimetreParameter
+
+    rear_link_angle_deg: DegreeParameter
+
+    reference_branch: ReferenceBranch | None = None
+
+    tolerance: NumericalTolerance
+
+    @model_validator(mode="after")
+    def validate_solver_input(self) -> Self:
+        for name, parameter in (
+            (
+                "rear_link_length_mm",
+                self.rear_link_length_mm,
+            ),
+            (
+                "shield_beam_effective_length_mm",
+                self.shield_beam_effective_length_mm,
+            ),
+            (
+                "front_link_length_mm",
+                self.front_link_length_mm,
+            ),
+            (
+                "base_pivot_spacing_mm",
+                self.base_pivot_spacing_mm,
+            ),
+        ):
+            _validate_finite_parameter(
+                parameter,
+                name=name,
+                positive=True,
+            )
+
+        _validate_finite_parameter(
+            self.rear_link_angle_deg,
+            name="rear_link_angle_deg",
+        )
+
+        _validate_finite_parameter(
+            self.front_link_base.x_mm,
+            name="front_link_base.x_mm",
+        )
+
+        _validate_finite_parameter(
+            self.front_link_base.y_mm,
+            name="front_link_base.y_mm",
+        )
+
+        return self
+
+
+class ClosureCandidate(StrictModel):
+    """One mathematically valid C candidate."""
+===== GEOMETRY DERIVATION =====
+    )
+
+
+def derive_geometry(
+    linkage: LinkageGeometry,
+) -> DerivedGeometry:
+    """Derive all currently available canonical linkage lengths.
+
+    Missing inputs produce missing outputs for only the dependent quantity.
+    The supplied LinkageGeometry object is not mutated.
+    """
+
+    result = DerivedGeometry()
+
+    rear_base = linkage.fixed_geometry.rear_link_base
+    front_base = linkage.fixed_geometry.front_link_base
+    pose = linkage.reference_pose
+
+    if front_base is not None:
+        result.base_pivot_spacing_mm = _calculated_length(
+            _distance_mm(
+                rear_base,
+                front_base,
+            ),
+            note=(
+                "distance between rear_link_base and "
+                "front_link_base"
+            ),
+        )
+
+    if pose is not None:
+        result.rear_link_length_mm = _calculated_length(
+            _distance_mm(
+                rear_base,
+                pose.rear_link_shield,
+            ),
+            note=(
+                "distance between rear_link_base and "
+                "rear_link_shield"
+            ),
+        )
+
+        result.shield_beam_effective_length_mm = (
+            _calculated_length(
+                _distance_mm(
+                    pose.rear_link_shield,
+                    pose.front_link_shield,
+                ),
+                note=(
+                    "effective linkage distance between "
+                    "rear_link_shield and front_link_shield"
+                ),
+            )
+        )
+
+        if front_base is not None:
+            result.front_link_length_mm = _calculated_length(
+                _distance_mm(
+                    front_base,
+                    pose.front_link_shield,
+                ),
+                note=(
+                    "distance between front_link_base and "
+                    "front_link_shield"
+                ),
+            )
+
+    return result
+===== CLOSURE FIXED BASE VALIDATION =====
+    return _calculated_point(
+        bx,
+        by,
+        point_role="rear_link_shield",
+    )
+
+
+def _validate_fixed_base(
+    task: ClosureSolverInput,
+) -> None:
+    """Validate that A-D coordinates agree with declared DA."""
+
+    ax = float(task.rear_link_base.x_mm)
+    ay = float(task.rear_link_base.y_mm)
+
+    dx = task.front_link_base.x_mm.value
+    dy = task.front_link_base.y_mm.value
+
+    geometric_ad = hypot(
+        dx - ax,
+        dy - ay,
+    )
+
+    declared_ad = (
+        task.base_pivot_spacing_mm.value
+    )
+
+    tolerance_mm = (
+        _effective_distance_tolerance(
+            task.tolerance,
+            geometric_ad,
+            declared_ad,
+        )
+    )
+
+    mismatch_mm = abs(
+        geometric_ad - declared_ad
+    )
+
+    if mismatch_mm > tolerance_mm:
+        raise ValueError(
+            "front_link_base coordinates are inconsistent "
+            "with base_pivot_spacing_mm: "
+            f"geometric_AD={geometric_ad!r} mm, "
+            f"declared_AD={declared_ad!r} mm, "
+            f"tolerance={tolerance_mm!r} mm"
+        )
+
+
+def _signed_distance_from_bd(
+    point_b: EngineeringPoint2D,
+    point_d: EngineeringPoint2D,
+    point_c: EngineeringPoint2D,
+) -> float:
+    """Signed perpendicular distance of C from directed B->D."""
+
+    bx = point_b.x_mm.value
+    by = point_b.y_mm.value
+
+    dx = point_d.x_mm.value
+    dy = point_d.y_mm.value
+
+    cx = point_c.x_mm.value
+    cy = point_c.y_mm.value
+
+    bdx = dx - bx
+    bdy = dy - by
+
+    q = hypot(
+        bdx,
+        bdy,
+    )
+
+    if q == 0:
+        raise ValueError(
+            "cannot classify branch when B and D coincide"
+        )
+
+    cross_mm2 = (
+        bdx * (cy - by)
+        - bdy * (cx - bx)
+    )
+
+    return cross_mm2 / q
+
+
+def _no_solution_result(
+    point_b: EngineeringPoint2D,
+) -> ClosureResult:
+    return ClosureResult(
+        closure_state="NO_SOLUTION",
