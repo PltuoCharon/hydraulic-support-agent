@@ -1,0 +1,106 @@
+Before-fix independent local reproduction confirmed BATCH_ABORTED = UnicodeEncodeError; exit code 0 for expected-defect assertion.
+COMMAND: venv/bin/python -c '
+from app.services.linkage_optimization_evaluation import evaluate_candidates
+bad_json = '"'"'{"unexpected":"\ud800"}'"'"'
+records = evaluate_candidates([('"'"'unicode_bad'"'"', bad_json), ('"'"'later_invalid'"'"', {})])
+assert len(records) == 2
+assert all(r.outcome == '"'"'INVALID_INPUT'"'"' for r in records)
+assert records[0].input_trace.representation == '"'"'JSON_TEXT'"'"'
+assert records[0].input_trace.sha256 is None
+print('"'"'AFTER_FIX: BATCH_CONTINUED; outcomes=INVALID_INPUT,INVALID_INPUT; JSON_TEXT hash=None'"'"')
+'
+AFTER_FIX: BATCH_CONTINUED; outcomes=INVALID_INPUT,INVALID_INPUT; JSON_TEXT hash=None
+
+EXIT_CODE: 0
+
+COMMAND: venv/bin/python -m pytest -q tests/test_w41d5_optimization_evaluation_models.py tests/test_w41d5_optimization_evaluation_service.py
+........................................................................ [ 86%]
+...........                                                              [100%]
+83 passed in 0.53s
+
+EXIT_CODE: 0
+
+COMMAND: venv/bin/python -m pytest -q tests/test_w41d4_evaluation_models.py tests/test_w41d4_evaluation_service.py tests/test_w41d5_optimization_evaluation_models.py tests/test_w41d5_optimization_evaluation_service.py
+........................................................................ [ 45%]
+........................................................................ [ 91%]
+.............                                                            [100%]
+157 passed in 0.68s
+
+EXIT_CODE: 0
+
+COMMAND: venv/bin/python -m pytest -q
+........................................................................ [  5%]
+........................................................................ [ 10%]
+........................................................................ [ 16%]
+........................................................................ [ 21%]
+........................................................................ [ 27%]
+........................................................................ [ 32%]
+........................................................................ [ 38%]
+........................................................................ [ 43%]
+........................................................................ [ 49%]
+........................................................................ [ 54%]
+........................................................................ [ 60%]
+........................................................................ [ 65%]
+........................................................................ [ 71%]
+........................................................................ [ 76%]
+........................................................................ [ 82%]
+........................................................................ [ 87%]
+........................................................................ [ 93%]
+........................................................................ [ 98%]
+....................                                                     [100%]
+=============================== warnings summary ===============================
+venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/zhangyongbo/hs_agent/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1316 passed, 1 warning in 17.31s
+
+EXIT_CODE: 0
+
+COMMAND: venv/bin/python -m pip check
+No broken requirements found.
+
+EXIT_CODE: 0
+
+MODIFICATION_SCOPE: only authorized service, service tests and closeout changed; file hashes checked against pre-fix snapshot.
+app/services/linkage_optimization_evaluation.py
+docs/evidence/w41/W41D5_closeout.md
+tests/test_w41d5_optimization_evaluation_service.py
+
+COMMAND: git diff --check
+EXIT_CODE: 0
+
+COMMAND: git diff --exit-code HEAD
+EXIT_CODE: 0
+
+COMMAND: git diff --cached --exit-code
+EXIT_CODE: 0
+
+COMMAND: git rev-parse HEAD
+9d82424824949db105ac0435a45dbed64c334958
+EXIT_CODE: 0
+
+COMMAND: git status --short --untracked-files=all
+?? app/models/linkage_optimization_evaluation.py
+?? app/services/linkage_optimization_evaluation.py
+?? docs/evidence/w41/W41D5_closeout.md
+?? docs/evidence/w41/W41D5_failure_contract.md
+?? tests/test_w41d5_optimization_evaluation_models.py
+?? tests/test_w41d5_optimization_evaluation_service.py
+EXIT_CODE: 0
+
+COMMAND: git check-ignore -v docs/evidence/w41/W41D5_unicode_fix_validation.log
+.gitignore:36:*.log	docs/evidence/w41/W41D5_unicode_fix_validation.log
+EXIT_CODE: 0
+
+COMMAND: git diff --no-index --check /dev/null app/services/linkage_optimization_evaluation.py
+EXIT_CODE: 1
+
+COMMAND: git diff --no-index --check /dev/null docs/evidence/w41/W41D5_closeout.md
+EXIT_CODE: 1
+
+COMMAND: git diff --no-index --check /dev/null tests/test_w41d5_optimization_evaluation_service.py
+EXIT_CODE: 1
+
+FINAL_SCOPE_AND_GIT_CHECKS: PASS
