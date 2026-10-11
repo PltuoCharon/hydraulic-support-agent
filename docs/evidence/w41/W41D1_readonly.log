@@ -1,0 +1,700 @@
+===== W41-D1 AUDIT SNAPSHOT =====
+2026-10-11T11:57:23+08:00
+===== PROJECT =====
+/home/zhangyongbo/hs_agent
+===== BRANCH AND HEAD =====
+main
+120900a86665faf3789a790e5244b095f4b3eba3
+120900a86665faf3789a790e5244b095f4b3eba3
+===== HISTORICAL ANCESTRY =====
+W33_TO_W37_EXIT=0
+W37_TO_W40_EXIT=0
+===== OPTIMIZATION DEPENDENCIES =====
+===== LINKAGE MODEL FILES =====
+app/models/linkage_closure.py
+app/models/linkage_geometry.py
+app/models/linkage_motion.py
+app/models/linkage_top_beam.py
+app/services/linkage_closure.py
+app/services/linkage_closure_integration.py
+app/services/linkage_geometry.py
+app/services/linkage_motion.py
+app/services/linkage_pose.py
+app/services/linkage_top_beam.py
+===== W39 BENCHMARK DATA =====
+case_id,benchmark_class,status,A_x_mm,A_y_mm,D_x_mm,D_y_mm,AB_mm,rear_link_angle_deg,BC_mm,CD_mm,expected_closure_state,engineering_verified,source_text,note
+SM-001,SYNTHETIC_MATH,READY,0,0,8,0,5,0,5,5,TWO_SOLUTIONS,false,W39-D1 synthetic math benchmark,Artificial geometry for two-circle intersection testing; not hydraulic-support design data.
+SM-002,SYNTHETIC_MATH,READY,0,0,8,0,5,0,1,2,TANGENT,false,W39-D1 synthetic math benchmark,"External tangency because B=(5,0), D=(8,0), q=3 and BC+CD=3."
+SM-003,SYNTHETIC_MATH,READY,0,0,8,0,5,0,1,1,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Separated circles because q=3 > BC+CD=2.
+SM-004,SYNTHETIC_MATH,READY,0,0,8,0,5,0,5,1,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Contained non-intersecting circles because q=3 < abs(BC-CD)=4.
+SM-005,SYNTHETIC_MATH,READY,0,0,5,0,5,0,2,2,DEGENERATE,false,W39-D1 synthetic math benchmark,Coincident centers and equal radii; infinitely many mathematical C points.
+SM-006,SYNTHETIC_MATH,READY,0,0,5,0,5,0,2,3,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Coincident centers with unequal radii.
+ER-001,ENGINEERING_REFERENCE,NOT_SOLVER_READY,,,,,,,,,,false,W38-D1 audited linkage literature/corpus,No engineering reference case currently has complete traceable A/B/C/D coordinates and branch information; do not fabricate missing geometry.
+===== W39 W40 TEST FILES =====
+tests/test_w39_closeout.py
+tests/test_w39d1_closeout.py
+tests/test_w39d1_closure_benchmarks.py
+tests/test_w39d1_four_bar_closure_contract.py
+tests/test_w39d1_push_jack_traceability_audit.py
+tests/test_w39d2_closeout.py
+tests/test_w39d2_closure_model_contract.py
+tests/test_w39d2_linkage_closure_model.py
+tests/test_w39d3_closeout.py
+tests/test_w39d3_linkage_closure_service.py
+tests/test_w39d3_numerical_closure_contract.py
+tests/test_w39d4_closeout.py
+tests/test_w39d4_reference_branch_contract.py
+tests/test_w39d4_reference_branch_service.py
+tests/test_w39d5_closeout.py
+tests/test_w39d5_linkage_integration_contract.py
+tests/test_w39d5_linkage_integration_service.py
+tests/test_w40d1_closeout.py
+tests/test_w40d1_continuous_motion_contract.py
+tests/test_w40d2_closeout.py
+tests/test_w40d2_linkage_motion_model.py
+tests/test_w40d2_motion_model_contract.py
+tests/test_w40d3_angle_sweep_contract.py
+tests/test_w40d3_closeout.py
+tests/test_w40d3_linkage_motion_service.py
+tests/test_w40d4_closeout.py
+tests/test_w40d4_top_beam_kinematic_contract.py
+tests/test_w40d5_closeout.py
+tests/test_w40d5_linkage_top_beam_model.py
+tests/test_w40d5_linkage_top_beam_service.py
+tests/test_w40d5_shield_top_beam_joint_trajectory_contract.py
+tests/test_w40d6_closeout.py
+
+===== W41-D1 FULL READ-ONLY AUDIT =====
+
+===== 01 OPTIMIZER CODE =====
+$ git grep -n -i -E 'scipy.optimize|pymoo|pyswarms|deap|NSGA.?II|genetic.algorithm|particle.swarm' -- app tests
+tests/test_w39_closeout.py:133:    assert "GA, PSO and NSGA-II" in s
+tests/test_w39d1_four_bar_closure_contract.py:246:    assert "NSGA-II" in s
+
+EXIT_CODE=0
+
+===== 02 DEPENDENCIES =====
+$ cat requirements.txt
+aiofiles==25.1.0
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.3
+aiosignal==1.4.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.14.2
+attrs==26.1.0
+beautifulsoup4==4.15.0
+blis==1.3.3
+catalogue==2.0.10
+certifi==2026.7.22
+cffi==2.1.0
+charset-normalizer==3.4.9
+click==8.4.2
+cloudpathlib==0.24.0
+confection==1.3.3
+cryptography==49.0.0
+cymem==2.0.13
+distro==1.9.0
+ecdsa==0.19.2
+emoji==2.15.0
+et_xmlfile==2.0.0
+fastapi==0.141.1
+filelock==3.32.2
+filetype==1.2.0
+frozenlist==1.8.0
+git-filter-repo==2.47.0
+greenlet==3.5.4
+h11==0.16.0
+html5lib==1.1
+httpcore==1.0.9
+httptools==0.8.0
+httpx==0.28.1
+httpx-sse==0.4.3
+idna==3.18
+iniconfig==2.3.0
+installer==0.7.0
+Jinja2==3.1.6
+jiter==0.16.0
+jsonpatch==1.33
+jsonpointer==3.1.1
+langchain==1.3.14
+langchain-classic==1.0.8
+langchain-community==0.4.2
+langchain-core==1.5.3
+langchain-openai==1.4.1
+langchain-protocol==0.0.18
+langchain-text-splitters==1.1.2
+langdetect==1.0.9
+langgraph==1.2.10
+langgraph-checkpoint==4.1.1
+langgraph-prebuilt==1.1.0
+langgraph-sdk==0.4.2
+langsmith==0.10.14
+llvmlite==0.48.0
+lxml==6.1.1
+markdown-it-py==4.2.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+multidict==6.7.1
+murmurhash==1.0.15
+nh3==0.3.6
+numba==0.66.0
+numpy==2.4.6
+olefile==0.47
+openai==2.51.0
+openpyxl==3.1.5
+orjson==3.11.9
+ormsgpack==1.12.2
+packaging==26.2
+pandas==3.0.5
+pdf2image==1.17.0
+pdfminer.six==20260107
+pdfplumber==0.11.10
+pillow==12.3.0
+pluggy==1.6.0
+preshed==3.0.13
+propcache==0.5.2
+psutil==7.2.2
+pyasn1==0.6.4
+pycparser==3.0
+pydantic==2.13.4
+pydantic-settings==2.14.2
+pydantic_core==2.46.4
+Pygments==2.20.0
+PyJWT==2.13.0
+PyMySQL==1.2.0
+pypdf==6.14.2
+PyPDF2==3.0.1
+pypdfium2==5.12.1
+pytesseract==0.3.13
+pytest==9.1.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.2
+python-iso639==2026.7.23
+python-jose==3.5.0
+python-magic==0.4.27
+python-oxmsg==0.0.2
+PyYAML==6.0.3
+RapidFuzz==3.14.5
+regex==2026.7.19
+requests==2.34.2
+requests-toolbelt==1.0.0
+rich==15.0.0
+rsa==4.9.1
+setuptools==83.0.0
+shellingham==1.5.4
+six==1.17.0
+smart_open==8.0.1
+sniffio==1.3.1
+soupsieve==2.9.1
+spacy==3.8.14
+spacy-legacy==3.0.12
+spacy-loggers==1.0.5
+SQLAlchemy==2.0.51
+srsly==2.5.3
+starlette==1.3.1
+tenacity==9.1.4
+thinc==8.3.13
+tiktoken==0.13.0
+tqdm==4.70.0
+typer==0.27.1
+typing-inspection==0.4.2
+typing_extensions==4.16.0
+unstructured==0.25.2
+unstructured-client==0.45.0
+urllib3==2.7.0
+uuid_utils==0.17.0
+uvicorn==0.52.1
+uvloop==0.22.1
+wasabi==1.1.3
+watchfiles==1.2.0
+weasel==1.0.0
+webencodings==0.5.1
+websockets==15.0.1
+wrapt==2.3.0
+xxhash==3.8.1
+yarl==1.24.5
+zstandard==0.25.0
+
+EXIT_CODE=0
+
+===== 03 FROZEN GEOMETRY =====
+$ sed -n 75,219p app/models/linkage_geometry.py
+class EngineeringPoint2D(StrictModel):
+    """One provenance-aware engineering point in normalized coordinates."""
+
+    x_mm: MillimetreParameter
+    y_mm: MillimetreParameter
+
+    point_role: str | None = None
+    note: str | None = None
+
+
+class DesignBoundaries(StrictModel):
+    """External design/validation boundaries for the mechanism."""
+
+    operating_height_min_mm: MillimetreParameter | None = None
+    operating_height_max_mm: MillimetreParameter | None = None
+
+    beam_tip_horizontal_displacement_limit_mm: (
+        MillimetreParameter | None
+    ) = None
+
+
+class FixedGeometry(StrictModel):
+    """Fixed pivots of the four-bar mechanism."""
+
+    rear_link_base: NormalizedOriginPoint = Field(
+        default_factory=NormalizedOriginPoint
+    )
+
+    front_link_base: EngineeringPoint2D | None = None
+
+
+class ReferencePose(StrictModel):
+    """One explicit physical reference configuration."""
+
+    support_height_mm: MillimetreParameter
+
+    rear_link_shield: EngineeringPoint2D
+    front_link_shield: EngineeringPoint2D
+
+    note: str | None = None
+
+
+class DerivedGeometry(StrictModel):
+    """Geometry that will later be deterministically derived."""
+
+    base_pivot_spacing_mm: MillimetreParameter | None = None
+
+    rear_link_length_mm: MillimetreParameter | None = None
+    front_link_length_mm: MillimetreParameter | None = None
+
+    shield_beam_effective_length_mm: (
+        MillimetreParameter | None
+    ) = None
+
+
+class TopBeamInterface(StrictModel):
+    """Geometry outside the canonical four-bar closure."""
+
+    shield_top_beam_pivot: EngineeringPoint2D | None = None
+    beam_tip_reference_point: EngineeringPoint2D | None = None
+
+
+class PoseResult(StrictModel):
+    """Reserved deterministic kinematic pose result."""
+
+    support_height_mm: MillimetreParameter
+
+    rear_link_shield: EngineeringPoint2D
+    front_link_shield: EngineeringPoint2D
+
+    rear_link_angle_deg: DegreeParameter | None = None
+    front_link_angle_deg: DegreeParameter | None = None
+    shield_beam_angle_deg: DegreeParameter | None = None
+
+    top_beam_pose: dict[str, Any] | None = None
+
+    note: str | None = None
+
+
+class TrajectoryResults(StrictModel):
+    """Reserved deterministic trajectory result container."""
+
+    beam_tip_trajectory: list[EngineeringPoint2D] | None = None
+
+    beam_tip_horizontal_displacement_mm: (
+        MillimetreParameter | None
+    ) = None
+
+    shield_top_beam_joint_trajectory: (
+        list[EngineeringPoint2D] | None
+    ) = None
+
+    instantaneous_center_trajectory: (
+        list[EngineeringPoint2D] | None
+    ) = None
+
+
+class ValidationResults(StrictModel):
+    """Reserved mechanism-validation result container."""
+
+    geometry_closure_ok: bool | None = None
+    operating_height_range_ok: bool | None = None
+    beam_tip_displacement_ok: bool | None = None
+
+    interference_status: str | None = None
+
+    validation_notes: list[str] = Field(default_factory=list)
+
+
+class LinkageGeometry(StrictModel):
+    """Canonical hs.linkageGeometry.v1 application model."""
+
+    version: Literal[1] = 1
+    status: ModuleStatus = "PARTIAL"
+
+    coordinate_system: CoordinateSystem = Field(
+        default_factory=CoordinateSystem
+    )
+
+    design_boundaries: DesignBoundaries = Field(
+        default_factory=DesignBoundaries
+    )
+
+    fixed_geometry: FixedGeometry = Field(
+        default_factory=FixedGeometry
+    )
+
+    reference_pose: ReferencePose | None = None
+
+    derived_geometry: DerivedGeometry = Field(
+        default_factory=DerivedGeometry
+    )
+
+    top_beam_interface: TopBeamInterface = Field(
+        default_factory=TopBeamInterface
+    )
+
+    pose_results: list[PoseResult] = Field(default_factory=list)
+
+    trajectory_results: TrajectoryResults | None = None
+    validation_results: ValidationResults | None = None
+
+    provenance: DesignProvenance = Field(
+        default_factory=DesignProvenance
+    )
+
+EXIT_CODE=0
+
+===== 04 CLOSURE INPUT =====
+$ sed -n 145,215p app/models/linkage_closure.py
+    )
+
+
+class ClosureSolverInput(StrictModel):
+    """Explicit input for one hs.linkageClosure.v1 solver task."""
+
+    version: Literal[1] = 1
+
+    rear_link_base: NormalizedOriginPoint = Field(
+        default_factory=NormalizedOriginPoint
+    )
+
+    front_link_base: EngineeringPoint2D
+
+    rear_link_length_mm: MillimetreParameter
+    shield_beam_effective_length_mm: MillimetreParameter
+    front_link_length_mm: MillimetreParameter
+    base_pivot_spacing_mm: MillimetreParameter
+
+    rear_link_angle_deg: DegreeParameter
+
+    reference_branch: ReferenceBranch | None = None
+
+    tolerance: NumericalTolerance
+
+    @model_validator(mode="after")
+    def validate_solver_input(self) -> Self:
+        for name, parameter in (
+            (
+                "rear_link_length_mm",
+                self.rear_link_length_mm,
+            ),
+            (
+                "shield_beam_effective_length_mm",
+                self.shield_beam_effective_length_mm,
+            ),
+            (
+                "front_link_length_mm",
+                self.front_link_length_mm,
+            ),
+            (
+                "base_pivot_spacing_mm",
+                self.base_pivot_spacing_mm,
+            ),
+        ):
+            _validate_finite_parameter(
+                parameter,
+                name=name,
+                positive=True,
+            )
+
+        _validate_finite_parameter(
+            self.rear_link_angle_deg,
+            name="rear_link_angle_deg",
+        )
+
+        _validate_finite_parameter(
+            self.front_link_base.x_mm,
+            name="front_link_base.x_mm",
+        )
+
+        _validate_finite_parameter(
+            self.front_link_base.y_mm,
+            name="front_link_base.y_mm",
+        )
+
+        return self
+
+
+class ClosureCandidate(StrictModel):
+    """One mathematically valid C candidate."""
+
+EXIT_CODE=0
+
+===== 05 DESIGN BOUNDS =====
+$ git grep -n -i -E 'design.vector|decision.variable|lower.bound|upper.bound|variable.bounds|engineering.domain|synthetic.domain|设计变量|变量边界|优化边界' -- app/models app/services docs/evidence/w38
+
+EXIT_CODE=1
+RESULT=NO_MATCH
+
+===== 06 EXECUTABLE SERVICES =====
+$ grep -nE '^def ' app/services/linkage_closure.py app/services/linkage_motion.py app/services/linkage_top_beam.py
+app/services/linkage_closure.py:33:def _effective_distance_tolerance(
+app/services/linkage_closure.py:53:def _calculated_mm(
+app/services/linkage_closure.py:68:def _calculated_point(
+app/services/linkage_closure.py:83:def calculate_rear_link_shield(
+app/services/linkage_closure.py:107:def _validate_fixed_base(
+app/services/linkage_closure.py:149:def _signed_distance_from_bd(
+app/services/linkage_closure.py:186:def _no_solution_result(
+app/services/linkage_closure.py:201:def _degenerate_result(
+app/services/linkage_closure.py:216:def solve_closure_candidates(
+app/services/linkage_closure.py:474:def _finite_reference_coordinate(
+app/services/linkage_closure.py:491:def derive_reference_branch(
+app/services/linkage_closure.py:589:def resolve_reference_branch(
+app/services/linkage_closure.py:687:def solve_closure(
+app/services/linkage_motion.py:35:def _build_closure_task(
+app/services/linkage_motion.py:60:def _require_normal_selected_result(
+app/services/linkage_motion.py:118:def _validate_tangent_result(
+app/services/linkage_motion.py:148:def _validate_no_solution_result(
+app/services/linkage_motion.py:160:def _validate_degenerate_result(
+app/services/linkage_motion.py:172:def sweep_rear_link_angles(
+app/services/linkage_top_beam.py:45:def _finite_float(
+app/services/linkage_top_beam.py:60:def _point_xy(
+app/services/linkage_top_beam.py:77:def _point_norm_mm(
+app/services/linkage_top_beam.py:93:def _point_error_mm(
+app/services/linkage_top_beam.py:116:def _calculated_mm(
+app/services/linkage_top_beam.py:129:def _calculated_point(
+app/services/linkage_top_beam.py:146:def _shield_frame(
+app/services/linkage_top_beam.py:211:def _derive_attachment(
+app/services/linkage_top_beam.py:363:def _validate_motion_reference(
+app/services/linkage_top_beam.py:494:def _propagate_joint_center(
+app/services/linkage_top_beam.py:615:def propagate_shield_top_beam_joint(
+
+EXIT_CODE=0
+
+===== 07 KINEMATIC OUTPUT STATES =====
+$ git grep -n -E 'selected_pose|closure_state|termination|joint_center' -- app/services/linkage_closure.py app/services/linkage_motion.py app/services/linkage_top_beam.py
+app/services/linkage_closure.py:190:        closure_state="NO_SOLUTION",
+app/services/linkage_closure.py:194:        selected_pose=None,
+app/services/linkage_closure.py:205:        closure_state="DEGENERATE",
+app/services/linkage_closure.py:209:        selected_pose=None,
+app/services/linkage_closure.py:347:        selected_pose = ClosureSelectedPose(
+app/services/linkage_closure.py:357:            closure_state="TANGENT",
+app/services/linkage_closure.py:363:            selected_pose=selected_pose,
+app/services/linkage_closure.py:458:        closure_state="TWO_SOLUTIONS",
+app/services/linkage_closure.py:462:        selected_pose=None,
+app/services/linkage_closure.py:601:    if result.closure_state != "TWO_SOLUTIONS":
+app/services/linkage_closure.py:610:        or result.selected_pose is not None
+app/services/linkage_closure.py:645:    selected_pose = ClosureSelectedPose(
+app/services/linkage_closure.py:666:    payload["selected_pose"] = (
+app/services/linkage_closure.py:667:        selected_pose.model_dump(
+app/services/linkage_motion.py:69:        result.closure_state
+app/services/linkage_motion.py:79:    if result.closure_state != "TWO_SOLUTIONS":
+app/services/linkage_motion.py:91:    if result.selected_pose is None:
+app/services/linkage_motion.py:94:            "result requires selected_pose"
+app/services/linkage_motion.py:98:        result.selected_pose.branch
+app/services/linkage_motion.py:128:    if result.selected_pose is None:
+app/services/linkage_motion.py:130:            "TANGENT boundary requires selected_pose"
+app/services/linkage_motion.py:133:    if result.selected_pose.branch != "TANGENT":
+app/services/linkage_motion.py:153:    if result.selected_pose is not None:
+app/services/linkage_motion.py:165:    if result.selected_pose is not None:
+app/services/linkage_motion.py:198:    termination = "COMPLETED"
+app/services/linkage_motion.py:233:        if result.closure_state == "TWO_SOLUTIONS":
+app/services/linkage_motion.py:256:        if result.closure_state == "TANGENT":
+app/services/linkage_motion.py:273:            termination = "TANGENT_BOUNDARY"
+app/services/linkage_motion.py:276:        if result.closure_state == "NO_SOLUTION":
+app/services/linkage_motion.py:293:            termination = "NO_SOLUTION_BOUNDARY"
+app/services/linkage_motion.py:296:        if result.closure_state == "DEGENERATE":
+app/services/linkage_motion.py:313:            termination = "DEGENERATE_BOUNDARY"
+app/services/linkage_motion.py:335:        termination=termination,
+app/services/linkage_top_beam.py:7:- preserve unsolved boundary samples with joint_center=None
+app/services/linkage_top_beam.py:345:        reference_joint_center=(
+app/services/linkage_top_beam.py:373:    selected_pose = (
+app/services/linkage_top_beam.py:374:        first.closure_result.selected_pose
+app/services/linkage_top_beam.py:377:    if selected_pose is None:
+app/services/linkage_top_beam.py:384:        selected_pose.rear_link_shield
+app/services/linkage_top_beam.py:388:        selected_pose.front_link_shield
+app/services/linkage_top_beam.py:494:def _propagate_joint_center(
+app/services/linkage_top_beam.py:655:        selected_pose = (
+app/services/linkage_top_beam.py:656:            closure_result.selected_pose
+app/services/linkage_top_beam.py:659:        if selected_pose is not None:
+app/services/linkage_top_beam.py:660:            if closure_result.closure_state not in {
+app/services/linkage_top_beam.py:669:            joint_center = (
+app/services/linkage_top_beam.py:670:                _propagate_joint_center(
+app/services/linkage_top_beam.py:672:                        selected_pose
+app/services/linkage_top_beam.py:676:                        selected_pose
+app/services/linkage_top_beam.py:688:            selected_pose_available = True
+app/services/linkage_top_beam.py:691:            if closure_result.closure_state not in {
+app/services/linkage_top_beam.py:700:            joint_center = None
+app/services/linkage_top_beam.py:701:            selected_pose_available = False
+app/services/linkage_top_beam.py:715:                closure_state=(
+app/services/linkage_top_beam.py:716:                    closure_result.closure_state
+app/services/linkage_top_beam.py:718:                selected_pose_available=(
+app/services/linkage_top_beam.py:719:                    selected_pose_available
+app/services/linkage_top_beam.py:721:                joint_center=joint_center,
+app/services/linkage_top_beam.py:742:            termination=motion.termination,
+
+EXIT_CODE=0
+
+===== 08 BENCHMARK POLICY =====
+$ cat docs/evidence/w39/W39D1_benchmark_policy.md
+# W39-D1 Four-Bar Closure Benchmark Policy
+
+## 1. Purpose
+
+W39 separates mathematical software benchmarks from hydraulic-support
+engineering reference cases.
+
+This prevents convenient artificial geometry from being presented as physical
+validation.
+
+## 2. SYNTHETIC_MATH
+
+SYNTHETIC_MATH cases are deliberately constructed mathematical examples.
+
+They may be used to verify:
+
+- point-B calculation
+- circle-intersection multiplicity
+- tangency
+- no-solution behavior
+- coincident-circle degeneracy
+- branch-sign calculation
+- numerical-tolerance behavior
+
+They are not hydraulic-support design data.
+
+They do not validate the physical correctness of a hydraulic-support
+mechanism.
+
+Current registered synthetic cases are:
+
+- SM-001 TWO_SOLUTIONS
+- SM-002 TANGENT
+- SM-003 separated-circle NO_SOLUTION
+- SM-004 contained-circle NO_SOLUTION
+- SM-005 coincident equal-circle DEGENERATE
+- SM-006 coincident unequal-circle NO_SOLUTION
+
+## 3. ENGINEERING_REFERENCE
+
+An ENGINEERING_REFERENCE case must have traceable hydraulic-support geometry.
+
+A solver-ready engineering reference requires, at minimum:
+
+- fixed pivot A
+- fixed pivot D
+- rear-link length AB
+- shield linkage length BC
+- front-link length CD
+- one traceable reference configuration or branch definition
+- source provenance
+
+If equivalent information is supplied as coordinates, those coordinates must
+also preserve provenance.
+
+Historical example dimensions alone are insufficient when they do not define
+the complete canonical geometry.
+
+## 4. Current engineering-reference status
+
+At W39-D1, no audited engineering reference case is solver-ready.
+
+ER-001 is intentionally registered as:
+
+NOT_SOLVER_READY
+
+The project shall preserve this missing-data state instead of fabricating
+pivot coordinates or a reference branch.
+
+W38 historical literature/example geometry remains research evidence only.
+
+It does not become a project default.
+
+## 5. Promotion rule
+
+An ENGINEERING_REFERENCE case may move to READY only after:
+
+1. source material is traceable
+2. parameter semantics are unambiguous
+3. all solver-required geometry is available
+4. units are explicit
+5. configuration/branch information is sufficient
+6. provenance is recorded
+
+Passing SYNTHETIC_MATH tests shall never promote an engineering case to
+verified status.
+
+## 6. W39 usage
+
+W39 closure implementation shall first pass all SYNTHETIC_MATH cases.
+
+Engineering comparison begins only when at least one ENGINEERING_REFERENCE case
+becomes solver-ready.
+
+Software validation and engineering validation remain separate.
+
+EXIT_CODE=0
+
+===== 09 BENCHMARK CASES =====
+$ cat docs/evidence/w39/W39D1_closure_benchmarks.csv
+case_id,benchmark_class,status,A_x_mm,A_y_mm,D_x_mm,D_y_mm,AB_mm,rear_link_angle_deg,BC_mm,CD_mm,expected_closure_state,engineering_verified,source_text,note
+SM-001,SYNTHETIC_MATH,READY,0,0,8,0,5,0,5,5,TWO_SOLUTIONS,false,W39-D1 synthetic math benchmark,Artificial geometry for two-circle intersection testing; not hydraulic-support design data.
+SM-002,SYNTHETIC_MATH,READY,0,0,8,0,5,0,1,2,TANGENT,false,W39-D1 synthetic math benchmark,"External tangency because B=(5,0), D=(8,0), q=3 and BC+CD=3."
+SM-003,SYNTHETIC_MATH,READY,0,0,8,0,5,0,1,1,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Separated circles because q=3 > BC+CD=2.
+SM-004,SYNTHETIC_MATH,READY,0,0,8,0,5,0,5,1,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Contained non-intersecting circles because q=3 < abs(BC-CD)=4.
+SM-005,SYNTHETIC_MATH,READY,0,0,5,0,5,0,2,2,DEGENERATE,false,W39-D1 synthetic math benchmark,Coincident centers and equal radii; infinitely many mathematical C points.
+SM-006,SYNTHETIC_MATH,READY,0,0,5,0,5,0,2,3,NO_SOLUTION,false,W39-D1 synthetic math benchmark,Coincident centers with unequal radii.
+ER-001,ENGINEERING_REFERENCE,NOT_SOLVER_READY,,,,,,,,,,false,W38-D1 audited linkage literature/corpus,No engineering reference case currently has complete traceable A/B/C/D coordinates and branch information; do not fabricate missing geometry.
+
+EXIT_CODE=0
+
+===== 10 W39 W40 TEST INVENTORY =====
+$ git ls-files 'tests/test_w39*' 'tests/test_w40*'
+tests/test_w39_closeout.py
+tests/test_w39d1_closeout.py
+tests/test_w39d1_closure_benchmarks.py
+tests/test_w39d1_four_bar_closure_contract.py
+tests/test_w39d1_push_jack_traceability_audit.py
+tests/test_w39d2_closeout.py
+tests/test_w39d2_closure_model_contract.py
+tests/test_w39d2_linkage_closure_model.py
+tests/test_w39d3_closeout.py
+tests/test_w39d3_linkage_closure_service.py
+tests/test_w39d3_numerical_closure_contract.py
+tests/test_w39d4_closeout.py
+tests/test_w39d4_reference_branch_contract.py
+tests/test_w39d4_reference_branch_service.py
+tests/test_w39d5_closeout.py
+tests/test_w39d5_linkage_integration_contract.py
+tests/test_w39d5_linkage_integration_service.py
+tests/test_w40d1_closeout.py
+tests/test_w40d1_continuous_motion_contract.py
+tests/test_w40d2_closeout.py
+tests/test_w40d2_linkage_motion_model.py
+tests/test_w40d2_motion_model_contract.py
+tests/test_w40d3_angle_sweep_contract.py
+tests/test_w40d3_closeout.py
+tests/test_w40d3_linkage_motion_service.py
+tests/test_w40d4_closeout.py
+tests/test_w40d4_top_beam_kinematic_contract.py
+tests/test_w40d5_closeout.py
+tests/test_w40d5_linkage_top_beam_model.py
+tests/test_w40d5_linkage_top_beam_service.py
+tests/test_w40d5_shield_top_beam_joint_trajectory_contract.py
+tests/test_w40d6_closeout.py
+
+EXIT_CODE=0
