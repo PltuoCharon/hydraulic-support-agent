@@ -1,0 +1,11 @@
+COMMAND: venv/bin/python -m pytest -q -s tests/test_w41d6_independent_numerical_oracle.py
+..........................SCALE s=1 branch=POSITIVE ideal=TWO_SOLUTIONS numerical=TWO_SOLUTIONS tau_mm=1.0000000000000001e-09 max_residual_mm=0.0 verdict=PASS
+.SCALE s=1e-08 branch=POSITIVE ideal=TWO_SOLUTIONS numerical=TWO_SOLUTIONS tau_mm=1.0000000000000001e-09 max_residual_mm=6.617444900424222e-24 verdict=PASS
+.SCALE s=1e-10 branch=POSITIVE ideal=TWO_SOLUTIONS numerical=DEGENERATE tau_mm=1.0000000000000001e-09 max_residual_mm=None verdict=LIMITATION
+.SCALE s=1 branch=NEGATIVE ideal=TWO_SOLUTIONS numerical=TWO_SOLUTIONS tau_mm=1.0000000000000001e-09 max_residual_mm=0.0 verdict=PASS
+.SCALE s=1e-08 branch=NEGATIVE ideal=TWO_SOLUTIONS numerical=TWO_SOLUTIONS tau_mm=1.0000000000000001e-09 max_residual_mm=6.617444900424222e-24 verdict=PASS
+.SCALE s=1e-10 branch=NEGATIVE ideal=TWO_SOLUTIONS numerical=DEGENERATE tau_mm=1.0000000000000001e-09 max_residual_mm=None verdict=LIMITATION
+...........
+42 passed in 0.32s
+
+EXIT_CODE: 0

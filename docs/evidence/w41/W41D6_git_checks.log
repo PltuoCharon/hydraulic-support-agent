@@ -1,0 +1,46 @@
+FROZEN_FILE_HASH_CHECK: PASS; 515 tracked files unchanged, including frozen code/tests/contracts and tracked D5 archives.
+
+COMMAND: git diff --check
+EXIT_CODE: 0
+
+COMMAND: git diff --exit-code HEAD
+EXIT_CODE: 0
+
+COMMAND: git diff --cached --exit-code
+EXIT_CODE: 0
+
+COMMAND: git rev-parse HEAD
+4e8ed7ef07f0a1654fbd89471c3c3cb2ab0bedd3
+EXIT_CODE: 0
+
+COMMAND: git status --short --untracked-files=all
+?? docs/evidence/w41/W41D6_closeout.md
+?? docs/evidence/w41/W41D6_oracle_matrix.md
+?? tests/test_w41d6_independent_numerical_oracle.py
+EXIT_CODE: 0
+
+COMMAND: git ls-files --others --exclude-standard
+docs/evidence/w41/W41D6_closeout.md
+docs/evidence/w41/W41D6_oracle_matrix.md
+tests/test_w41d6_independent_numerical_oracle.py
+EXIT_CODE: 0
+
+COMMAND: git check-ignore -v docs/evidence/w41/W41D6_combined_pytest.log docs/evidence/w41/W41D6_full_pytest.log docs/evidence/w41/W41D6_git_checks.log docs/evidence/w41/W41D6_initial_targeted_pytest.log docs/evidence/w41/W41D6_pip_check.log docs/evidence/w41/W41D6_targeted_pytest.log
+.gitignore:36:*.log	docs/evidence/w41/W41D6_combined_pytest.log
+.gitignore:36:*.log	docs/evidence/w41/W41D6_full_pytest.log
+.gitignore:36:*.log	docs/evidence/w41/W41D6_git_checks.log
+.gitignore:36:*.log	docs/evidence/w41/W41D6_initial_targeted_pytest.log
+.gitignore:36:*.log	docs/evidence/w41/W41D6_pip_check.log
+.gitignore:36:*.log	docs/evidence/w41/W41D6_targeted_pytest.log
+EXIT_CODE: 0
+
+COMMAND: git diff --no-index --check /dev/null docs/evidence/w41/W41D6_closeout.md
+EXIT_CODE: 1
+
+COMMAND: git diff --no-index --check /dev/null docs/evidence/w41/W41D6_oracle_matrix.md
+EXIT_CODE: 1
+
+COMMAND: git diff --no-index --check /dev/null tests/test_w41d6_independent_numerical_oracle.py
+EXIT_CODE: 1
+
+FINAL_SCOPE_AND_GIT_CHECKS: PASS

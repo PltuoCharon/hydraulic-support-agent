@@ -1,0 +1,16 @@
+COMMAND: venv/bin/python -m pytest -q tests/test_w39_closeout.py tests/test_w39d1_closeout.py tests/test_w39d1_closure_benchmarks.py tests/test_w39d1_four_bar_closure_contract.py tests/test_w39d1_push_jack_traceability_audit.py tests/test_w39d2_closeout.py tests/test_w39d2_closure_model_contract.py tests/test_w39d2_linkage_closure_model.py tests/test_w39d3_closeout.py tests/test_w39d3_linkage_closure_service.py tests/test_w39d3_numerical_closure_contract.py tests/test_w39d4_closeout.py tests/test_w39d4_reference_branch_contract.py tests/test_w39d4_reference_branch_service.py tests/test_w39d5_closeout.py tests/test_w39d5_linkage_integration_contract.py tests/test_w39d5_linkage_integration_service.py tests/test_w40d1_closeout.py tests/test_w40d1_continuous_motion_contract.py tests/test_w40d2_closeout.py tests/test_w40d2_linkage_motion_model.py tests/test_w40d2_motion_model_contract.py tests/test_w40d3_angle_sweep_contract.py tests/test_w40d3_closeout.py tests/test_w40d3_linkage_motion_service.py tests/test_w40d4_closeout.py tests/test_w40d4_top_beam_kinematic_contract.py tests/test_w40d5_closeout.py tests/test_w40d5_linkage_top_beam_model.py tests/test_w40d5_linkage_top_beam_service.py tests/test_w40d5_shield_top_beam_joint_trajectory_contract.py tests/test_w40d6_closeout.py tests/test_w41d3_design_adapter.py tests/test_w41d3_design_vector_model.py tests/test_w41d4_evaluation_models.py tests/test_w41d4_evaluation_service.py tests/test_w41d5_optimization_evaluation_models.py tests/test_w41d5_optimization_evaluation_service.py tests/test_w41d6_independent_numerical_oracle.py
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+........................................................................ [ 34%]
+........................................................................ [ 43%]
+........................................................................ [ 52%]
+........................................................................ [ 60%]
+........................................................................ [ 69%]
+........................................................................ [ 78%]
+........................................................................ [ 87%]
+........................................................................ [ 95%]
+...................................                                      [100%]
+827 passed in 1.65s
+
+EXIT_CODE: 0
