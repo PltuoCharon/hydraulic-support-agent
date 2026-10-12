@@ -308,7 +308,7 @@ class OptimizationResult(ExperimentModel):
 class OptimizationRun(ExperimentModel):
     run_id: Identifier = Field(pattern=r"^[A-Za-z0-9_.-]{1,128}$")
     problem: OptimizationProblem
-    algorithm_name: Literal["MANUAL", "GA", "PSO", "UNSPECIFIED"]
+    algorithm_name: Literal["MANUAL", "GA", "PSO", "UNSPECIFIED", "RANDOM_SEARCH_V1"]
     random_seed: int | None = Field(ge=0)
     budget: int = Field(gt=0)
     candidate_count: int = Field(ge=0)
